@@ -134,6 +134,27 @@ function resolveSwap(t) {
   return { ok: true, swapped: t.lastSwap };
 }
 
+// 진행자 수동 컨트롤: 팀원을 다른 팀으로 이동.
+export function movePlayer(t, name, toTeam) {
+  if (!t.active || (toTeam !== 'A' && toTeam !== 'B')) return { error: '이동 불가.' };
+  const from = teamOf(t, name);
+  if (!from || from === toTeam) return { error: '이미 그 팀이거나 명단에 없어요.' };
+  t.teams[from].members = t.teams[from].members.filter((m) => m !== name);
+  t.teams[toTeam].members.push(name);
+  // 팀장이 빠졌으면 남은 첫 멤버를 임시 팀장으로 (진행자가 다시 지정 가능).
+  if (t.teams[from].leader === name) t.teams[from].leader = t.teams[from].members[0] || null;
+  return { ok: true };
+}
+
+// 진행자 수동 컨트롤: 특정 팀원을 그 팀의 팀장으로 지정.
+export function setLeader(t, name) {
+  if (!t.active) return { error: '팀전 중이 아니에요.' };
+  const team = teamOf(t, name);
+  if (!team) return { error: '명단에 없어요.' };
+  t.teams[team].leader = name;
+  return { ok: true };
+}
+
 // 클라이언트로 보낼 공개 상태.
 export function tournamentPublic(t) {
   if (!t.active) return null;

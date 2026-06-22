@@ -163,6 +163,15 @@ input:focus { border-color: var(--accent2); }
 .team-B { border-left-color: var(--accent); }
 .team-top { display: flex; justify-content: space-between; align-items: center; }
 .team-score { font-size: 26px; font-weight: 900; color: var(--good); }
+.member-edit { margin: 8px 0; }
+.medit-row { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; }
+.medit-row .mname { font-size: 14px; }
+.medit-row .mbtns { display: flex; gap: 5px; }
+.medit-row .mbtns button {
+  background: var(--bg); border: 1px solid var(--line); color: var(--muted);
+  border-radius: 8px; padding: 5px 9px; font-size: 12px; cursor: pointer;
+}
+.medit-row .mbtns button:active { transform: scale(0.95); }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
 .chip { background: var(--bg); border: 1px solid var(--line); border-radius: 20px; padding: 4px 10px; font-size: 13px; }
 .chip.leader { border-color: var(--accent); color: var(--accent); font-weight: 700; }

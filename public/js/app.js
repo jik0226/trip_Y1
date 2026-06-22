@@ -4,8 +4,15 @@ const $ = (id) => document.getElementById(id);
 const screens = { home: $('home'), player: $('player'), host: $('host') };
 
 let myName = null;   // 내가 고른 이름 (플레이어로 입장한 경우)
-let isHost = false;  // 이 폰이 진행자 컨트롤을 켰는지
+let isHost = false;  // 이 폰이 진행자 컨트롤 화면을 켰는지
 let lastRoom = null;
+
+// 브라우저별 고유 ID — 같은 폰의 새로고침/재접속은 허용, 다른 사람의 도용은 차단.
+const clientId = (() => {
+  let id = localStorage.getItem('clientId');
+  if (!id) { id = 'c-' + Math.random().toString(36).slice(2) + Date.now().toString(36); localStorage.setItem('clientId', id); }
+  return id;
+})();
 
 const show = (name) => { for (const k in screens) screens[k].classList.toggle('active', k === name); };
 
@@ -14,8 +21,12 @@ window.App = { socket, $, esc, getMyName: () => myName };
 
 // ---- 입장 동작 -----------------------------------------------------------
 function claim(name) {
-  socket.emit('claim', { name }, (res) => {
-    if (!res?.ok) return ($('homeError').textContent = res?.error || '입장 실패');
+  socket.emit('claim', { name, clientId }, (res) => {
+    if (!res?.ok) {
+      $('homeError').textContent = res?.error || '입장 실패';
+      sessionStorage.removeItem('myName');
+      return;
+    }
     myName = name;
     sessionStorage.setItem('myName', name);
     isHost = false;
@@ -23,8 +34,9 @@ function claim(name) {
   });
 }
 
-$('hostModeBtn').onclick = () => socket.emit('becomeHost', null, () => { isHost = true; updateHostBack(); show('host'); });
-$('toHostBtn').onclick = () => socket.emit('becomeHost', null, () => { isHost = true; updateHostBack(); show('host'); });
+$('toHostBtn').onclick = () => socket.emit('becomeHost', null, (res) => {
+  if (res?.ok) { isHost = true; updateHostBack(); show('host'); }
+});
 $('backToPlayerBtn').onclick = () => show('player');
 $('leaveBtn').onclick = () => { sessionStorage.removeItem('myName'); myName = null; show('home'); };
 $('hEndBtn').onclick = () => socket.emit('host:endGame');
@@ -67,10 +79,14 @@ function renderHome(room) {
 function renderPlayer(room) {
   const me = room.players.find((p) => p.name === myName);
   if (me) {
-    $('pMe').textContent = `${me.name}${room.hostId && isHost ? ' (진행자)' : ''}`;
+    const iAmHost = room.hostName === myName;
+    const iAmLeader = room.leaders && (room.leaders.A === myName || room.leaders.B === myName);
+    $('pMe').textContent = `${me.name}${iAmHost ? ' · 진행자 🎮' : iAmLeader ? ' · 팀장 👑' : ''}`;
     $('pName').textContent = me.name;
     $('pTeam').textContent = me.team || '미정';
     $('pScore').textContent = me.score;
+    // 진행자 컨트롤 버튼은 기본 진행자(인겸)에게만 노출.
+    $('toHostBtn').classList.toggle('hidden', myName !== room.defaultHost);
   }
   $('pPlayers').innerHTML = room.players.map(playerRow).join('');
   renderShared($('pShared'), room.game);

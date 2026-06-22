@@ -8,8 +8,6 @@
   const teamOf = (t, name) =>
     t.teams.A.members.includes(name) ? 'A' : t.teams.B.members.includes(name) ? 'B' : null;
   const isLeader = (t, name) => name && (t.teams.A.leader === name || t.teams.B.leader === name);
-  const memberChips = (team) =>
-    team.members.map((m) => `<span class="chip ${m === team.leader ? 'leader' : ''}">${esc(m)}${m === team.leader ? ' 👑' : ''}</span>`).join('');
 
   const resultsHtml = (t) =>
     t.results.length
@@ -76,9 +74,17 @@
 
   function teamScoreBlock(t, k) {
     const team = t.teams[k];
+    const other = k === 'A' ? 'B' : 'A';
     return `<div class="team-block team-${k}">
       <div class="team-top"><b>${esc(team.name)}</b><span class="team-score">${t.teamScore[k]}</span></div>
-      <div class="chips">${memberChips(team)}</div>
+      <div class="member-edit">${team.members.map((m) => `
+        <div class="medit-row">
+          <span class="mname">${esc(m)}${m === team.leader ? ' 👑' : ''}</span>
+          <span class="mbtns">
+            ${m === team.leader ? '' : `<button data-act="setLeader" data-name="${esc(m)}">팀장</button>`}
+            <button data-act="move" data-name="${esc(m)}" data-to="${other}">→${other}</button>
+          </span>
+        </div>`).join('')}</div>
       <div class="score-ctrl">
         <button data-act="ts" data-team="${k}" data-d="-1">−</button>
         <button data-act="ts" data-team="${k}" data-d="1">＋ 점수</button>
@@ -159,6 +165,8 @@
         else if (a === 'endTour') { if (confirm('팀전을 초기화할까요?')) socket.emit('host:endTournament'); }
         else if (a === 'pick') socket.emit('leader:pick', { target: b.dataset.target });
         else if (a === 'vote') socket.emit('swap:vote', { target: b.dataset.target });
+        else if (a === 'move') socket.emit('host:movePlayer', { name: b.dataset.name, toTeam: b.dataset.to });
+        else if (a === 'setLeader') socket.emit('host:setLeader', { name: b.dataset.name });
       });
     });
   }

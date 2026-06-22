@@ -5,23 +5,21 @@ let pass = 0, fail = 0;
 const ok = (c, m) => (c ? (pass++, console.log('  ✅', m)) : (fail++, console.log('  ❌', m)));
 
 const NAMES = ['택윤', '인성', '규빈', '희근', '인겸', '현우', '지원', '정운'];
-const host = io(URL);
-await new Promise((r) => host.on('connect', r));
-let R = null;
-host.on('room:update', (s) => (R = s));
-await host.emitWithAck('becomeHost', null);
 
-// 8명 전원 접속 (소켓 보관)
+// 8명 전원 접속 (소켓 보관). 인겸은 자동으로 진행자가 됨.
 const socks = {};
 for (const n of NAMES) {
   const s = io(URL);
   await new Promise((r) => s.on('connect', r));
-  await s.emitWithAck('claim', { name: n });
+  await s.emitWithAck('claim', { name: n, clientId: 'c-' + n });
   socks[n] = s;
 }
+const host = socks['인겸']; // 인겸 = 진행자 겸 플레이어
+let R = null;
+host.on('room:update', (s) => (R = s));
 await wait(200);
 
-const t = () => R.tournament;
+const t = () => R?.tournament;
 host.emit('host:endTournament');                       // 이전 실행 상태 정리 (영속 서버)
 for (let i = 0; i < 20 && t(); i++) await wait(50);
 host.emit('host:startTournament');
@@ -104,6 +102,14 @@ ok(t().lastSwap?.method === 'vote', `다수결 교환 완료 (${t().lastSwap?.At
 ok(t().teams.B.members.includes('현우') && t().teams.A.members.includes('인성'), '팀장끼리 맞교환 (현우→B, 인성→A)');
 ok(t().teams.A.leader === '인성' && t().teams.B.leader === '현우', '새로 합류한 사람이 새 팀장 (승계)');
 ok(leadersOk(), '승계 후에도 팀장은 자기 팀 멤버');
+
+// --- #3 진행자 수동 팀 컨트롤 ---
+const moveTarget = t().teams.B.members[0];
+host.emit('host:movePlayer', { name: moveTarget, toTeam: 'A' }); await wait(200);
+ok(t().teams.A.members.includes(moveTarget) && !t().teams.B.members.includes(moveTarget), `진행자 수동 이동: ${moveTarget}→A`);
+ok(leadersOk(), '수동 이동 후에도 팀장 유지');
+host.emit('host:setLeader', { name: moveTarget }); await wait(200);
+ok(t().teams.A.leader === moveTarget, `진행자 수동 팀장 지정: ${moveTarget}`);
 
 console.log(`\n결과: ${pass} 통과 / ${fail} 실패`);
 host.close(); Object.values(socks).forEach((s) => s.close());

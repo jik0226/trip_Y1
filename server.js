@@ -6,10 +6,12 @@ import express from 'express';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import { GAMES } from './games.js';
-import { NAMES } from './players.js';
+import { NAMES, DEFAULT_HOST } from './players.js';
+import { TEAM_CONFIG } from './teams.js';
 import {
   initTournament, startTournament, addTeamScore, endTime, startSwap,
   leaderPick, castVote, forceResolve, teamOf, tournamentPublic,
+  movePlayer, setLeader,
 } from './tournament.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -24,8 +26,20 @@ const room = {
   game: null,
   tournament: initTournament(),
   players: new Map(
-    NAMES.map((name) => [name, { name, team: null, score: 0, connected: false, socketId: null }])
+    NAMES.map((name) => [name, { name, team: null, score: 0, connected: false, socketId: null, clientId: null }])
   ),
+};
+
+// 현재 팀장 2명 (토너먼트 진행 중이면 그 팀장, 아니면 기본 설정).
+const currentLeaders = () => {
+  const t = room.tournament;
+  return t?.active
+    ? { A: t.teams.A.leader, B: t.teams.B.leader }
+    : { A: TEAM_CONFIG.A.leader, B: TEAM_CONFIG.B.leader };
+};
+const nameOfSocket = (sid) => {
+  for (const p of room.players.values()) if (p.socketId === sid) return p.name;
+  return null;
 };
 
 const publicState = () => ({
@@ -34,6 +48,9 @@ const publicState = () => ({
     return { id: n, name: n, team: teamOf(room.tournament, n), score: p.score, connected: p.connected };
   }),
   hostId: room.hostId,
+  hostName: nameOfSocket(room.hostId),
+  defaultHost: DEFAULT_HOST,
+  leaders: currentLeaders(),
   game: room.game
     ? { id: room.game.id, name: room.game.name, emoji: room.game.emoji, public: room.game.public }
     : null,
@@ -55,11 +72,12 @@ const sendYou = () => {
 io.on('connection', (socket) => {
   socket.emit('room:update', publicState()); // 홈 화면이 이름 카드/접속현황을 바로 그릴 수 있게
 
-  socket.on('claim', ({ name }, cb) => {
+  socket.on('claim', ({ name, clientId }, cb) => {
     const p = room.players.get(name);
     if (!p) return cb?.({ ok: false, error: '명단에 없는 이름이에요.' });
-    if (p.connected && p.socketId && p.socketId !== socket.id) {
-      io.to(p.socketId).emit('bumped'); // 다른 폰이 같은 이름을 가져감
+    // 이미 다른 기기/사람이 접속 중이면 차단 (같은 브라우저의 새로고침·재접속은 clientId로 허용).
+    if (p.connected && p.clientId && clientId && p.clientId !== clientId) {
+      return cb?.({ ok: false, error: `${name}(으)로 이미 접속 중이에요. 다른 이름을 골라주세요.` });
     }
     if (socket.data.name && socket.data.name !== name) {
       const prev = room.players.get(socket.data.name); // 이름 바꿔 선택
@@ -67,13 +85,19 @@ io.on('connection', (socket) => {
     }
     p.connected = true;
     p.socketId = socket.id;
+    p.clientId = clientId || p.clientId;
     socket.data.name = name;
+    // 기본 진행자(인겸)가 들어오고 현재 진행자가 없으면 자동으로 진행자 지정.
+    if (name === DEFAULT_HOST && !room.hostId) room.hostId = socket.id;
     cb?.({ ok: true, name });
     broadcast();
     io.to(socket.id).emit('you:update', room.game?.perPlayer?.[name] || null);
+    if (room.hostId === socket.id) io.to(socket.id).emit('host:reveal', room.game?.host || null);
   });
 
+  // 진행자는 기본 진행자(인겸)만 될 수 있음.
   socket.on('becomeHost', (_, cb) => {
+    if (socket.data.name !== DEFAULT_HOST) return cb?.({ ok: false, error: '진행자는 인겸만 가능해요.' });
     room.hostId = socket.id;
     cb?.({ ok: true });
     broadcast();
@@ -140,6 +164,10 @@ io.on('connection', (socket) => {
 
   socket.on('host:endTournament', () =>
     asHost(() => { room.tournament = initTournament(); broadcast(); }));
+
+  // 진행자 수동 팀 컨트롤
+  socket.on('host:movePlayer', ({ name, toTeam }) => asHost(() => relay(movePlayer(room.tournament, name, toTeam))));
+  socket.on('host:setLeader', ({ name }) => asHost(() => relay(setLeader(room.tournament, name))));
 
   // 팀장 지정 / 다수결 투표 — 참가자 본인 소켓에서 발생
   socket.on('leader:pick', ({ target }) => {
