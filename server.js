@@ -13,6 +13,11 @@ import {
   leaderPick, castVote, forceResolve, teamOf, tournamentPublic,
   movePlayer, setLeader,
 } from './tournament.js';
+import { SPEED_GAMES } from './speedgames.js';
+import {
+  initSpeedQuiz, startSpeedQuiz, sqWord, sqSetFirst, sqSetPresenter,
+  sqBegin, sqCorrect, sqPass, sqEndRound, speedQuizPublic,
+} from './speedquiz.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -25,6 +30,7 @@ const room = {
   hostId: null,
   game: null,
   tournament: initTournament(),
+  speedquiz: initSpeedQuiz(),
   players: new Map(
     NAMES.map((name) => [name, { name, team: null, score: 0, connected: false, socketId: null, clientId: null }])
   ),
@@ -57,7 +63,11 @@ const publicState = () => ({
   games: Object.values(GAMES).map((g) => ({
     id: g.id, name: g.name, emoji: g.emoji, desc: g.desc, minPlayers: g.minPlayers,
   })),
+  speedGames: Object.values(SPEED_GAMES).map((g) => ({
+    id: g.id, name: g.name, emoji: g.emoji, keyword: g.keyword,
+  })),
   tournament: tournamentPublic(room.tournament),
+  speedquiz: speedQuizPublic(room.speedquiz),
 });
 
 const broadcast = () => io.emit('room:update', publicState());
@@ -66,6 +76,36 @@ const sendYou = () => {
   for (const p of room.players.values()) {
     if (!p.connected || !p.socketId) continue;
     io.to(p.socketId).emit('you:update', room.game?.perPlayer?.[p.name] || null);
+  }
+};
+
+// --- 스피드 퀴즈: 타이머 + 출제자 단어 전송 ---
+let sqTimer = null;
+const stopSqTimer = () => { if (sqTimer) { clearTimeout(sqTimer); sqTimer = null; } };
+const socketOf = (name) => { const p = name && room.players.get(name); return p?.socketId || null; };
+const sendSqWord = () => {
+  const s = room.speedquiz;
+  if (!s.active || s.phase !== 'playing') return;
+  const sid = socketOf(s.presenter[s.currentTeam]);
+  if (sid) io.to(sid).emit('sq:word', { word: sqWord(s) });
+};
+const clearSqWord = () => {
+  for (const t of ['A', 'B']) { const sid = socketOf(room.speedquiz.presenter?.[t]); if (sid) io.to(sid).emit('sq:word', null); }
+};
+const finishRound = () => {
+  const r = sqEndRound(room.speedquiz);
+  stopSqTimer(); clearSqWord();
+  if (r.finished && r.winner && r.winner !== 'draw' && room.tournament.active) {
+    addTeamScore(room.tournament, r.winner, 1); // 이긴 팀에 승점 +1
+  }
+  broadcast();
+  return r;
+};
+const armSqTimer = () => {
+  stopSqTimer();
+  const s = room.speedquiz;
+  if (s.active && s.phase === 'playing' && s.roundEndsAt) {
+    sqTimer = setTimeout(finishRound, Math.max(0, s.roundEndsAt - Date.now()));
   }
 };
 
@@ -93,6 +133,11 @@ io.on('connection', (socket) => {
     broadcast();
     io.to(socket.id).emit('you:update', room.game?.perPlayer?.[name] || null);
     if (room.hostId === socket.id) io.to(socket.id).emit('host:reveal', room.game?.host || null);
+    // 스피드 퀴즈 진행 중 출제자가 재접속하면 단어 다시 전송.
+    const sq = room.speedquiz;
+    if (sq.active && sq.phase === 'playing' && sq.presenter[sq.currentTeam] === name) {
+      io.to(socket.id).emit('sq:word', { word: sqWord(sq) });
+    }
   });
 
   // 진행자는 기본 진행자(인겸)만 될 수 있음.
@@ -168,6 +213,35 @@ io.on('connection', (socket) => {
   // 진행자 수동 팀 컨트롤
   socket.on('host:movePlayer', ({ name, toTeam }) => asHost(() => relay(movePlayer(room.tournament, name, toTeam))));
   socket.on('host:setLeader', ({ name }) => asHost(() => relay(setLeader(room.tournament, name))));
+
+  // --- 스피드 퀴즈 (출제자형) ---
+  socket.on('host:sq:start', ({ variantId, duration }) => asHost(() => {
+    stopSqTimer(); room.game = null;
+    room.speedquiz = startSpeedQuiz(variantId, { duration }) || initSpeedQuiz();
+    if (!room.speedquiz.active) io.to(socket.id).emit('host:error', '게임을 찾을 수 없어요.');
+    broadcast();
+  }));
+  socket.on('host:sq:setFirst', ({ team }) => asHost(() => relay(sqSetFirst(room.speedquiz, team))));
+  socket.on('host:sq:setPresenter', ({ team, name }) => asHost(() => {
+    if (room.tournament.active && teamOf(room.tournament, name) !== team) {
+      return io.to(socket.id).emit('host:error', '그 팀 팀원만 출제자로 지정할 수 있어요.');
+    }
+    relay(sqSetPresenter(room.speedquiz, team, name));
+  }));
+  socket.on('host:sq:begin', () => asHost(() => {
+    const r = sqBegin(room.speedquiz, Date.now());
+    if (r.error) return io.to(socket.id).emit('host:error', r.error);
+    armSqTimer(); broadcast(); sendSqWord();
+  }));
+  socket.on('host:sq:endRound', () => asHost(() => {
+    if (room.speedquiz.phase !== 'playing') return;
+    finishRound();
+  }));
+  socket.on('host:sq:end', () => asHost(() => { stopSqTimer(); room.speedquiz = initSpeedQuiz(); broadcast(); }));
+
+  // 출제자 본인 조작
+  socket.on('sq:correct', () => { if (!sqCorrect(room.speedquiz, socket.data.name).error) { broadcast(); sendSqWord(); } });
+  socket.on('sq:pass', () => { if (!sqPass(room.speedquiz, socket.data.name).error) { broadcast(); sendSqWord(); } });
 
   // 팀장 지정 / 다수결 투표 — 참가자 본인 소켓에서 발생
   socket.on('leader:pick', ({ target }) => {

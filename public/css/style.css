@@ -194,3 +194,25 @@ input:focus { border-color: var(--accent2); }
 .team-scores { font-size: 22px; font-weight: 900; text-align: center; margin: 6px 0; }
 .team-scores .team-A { color: var(--accent2); }
 .team-scores .team-B { color: var(--accent); }
+
+/* ---- 스피드 퀴즈 ---- */
+.sq-score { font-size: 24px; font-weight: 900; text-align: center; margin: 8px 0; }
+.sq-score .team-A { color: var(--accent2); }
+.sq-score .team-B { color: var(--accent); }
+.sq-winner { text-align: center; font-size: 20px; font-weight: 900; color: var(--good); margin: 8px 0; }
+.sq-row { margin: 8px 0; font-size: 14px; }
+.sq-live { background: var(--card2); border-radius: 12px; padding: 14px; text-align: center; margin: 8px 0; }
+.sq-timer { font-weight: 900; color: var(--accent); }
+.sq-watch { text-align: center; font-size: 18px; font-weight: 800; margin: 10px 0; }
+.sq-pcount { text-align: center; color: var(--muted); font-size: 14px; margin: 6px 0; }
+/* 출제자 화면 */
+.sq-presenter { text-align: center; }
+.sq-word {
+  font-size: 44px; font-weight: 900; letter-spacing: 1px; word-break: keep-all;
+  margin: 16px 0; line-height: 1.2;
+}
+.sq-presenter .sq-timer { font-size: 18px; }
+.sq-btns { display: grid; grid-template-columns: 1fr 2fr; gap: 10px; margin-top: 14px; }
+.sq-btns .btn { margin: 0; padding: 20px 0; font-size: 18px; }
+.sq-btns .pass { background: var(--card2); border: 1px solid var(--line); color: var(--muted); }
+.sq-btns .correct { background: var(--good); color: #062; }
