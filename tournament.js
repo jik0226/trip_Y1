@@ -3,7 +3,6 @@
 import { TEAM_CONFIG, CHORES } from './teams.js';
 
 const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
-const nonLeaders = (team) => team.members.filter((m) => m !== team.leader);
 
 export function initTournament() {
   return { active: false };
@@ -74,8 +73,8 @@ export function leaderPick(t, leaderName, targetName) {
   const myTeam = teamOf(t, leaderName);
   if (!myTeam || t.teams[myTeam].leader !== leaderName) return { error: '팀장만 지정할 수 있어요.' };
   const opp = myTeam === 'A' ? 'B' : 'A';
-  if (!nonLeaders(t.teams[opp]).includes(targetName)) return { error: '상대 팀 일반 팀원만 데려올 수 있어요.' };
-  t.swap.picks[myTeam] = targetName; // myTeam이 데려올 사람(상대 소속)
+  if (!t.teams[opp].members.includes(targetName)) return { error: '상대 팀에서만 데려올 수 있어요.' };
+  t.swap.picks[myTeam] = targetName; // myTeam이 데려올 사람(상대 소속, 팀장 포함)
   if (t.swap.picks.A && t.swap.picks.B) return resolveSwap(t);
   return { ok: true };
 }
@@ -85,8 +84,8 @@ export function castVote(t, voterName, targetName) {
   if (t.phase !== 'swap' || t.swap.method !== 'vote') return { error: '투표 단계가 아니에요.' };
   const team = teamOf(t, voterName);
   if (!team) return { error: '팀원이 아니에요.' };
-  if (!nonLeaders(t.teams[team]).includes(targetName)) return { error: '같은 팀 일반 팀원에게만 투표할 수 있어요.' };
-  t.swap.votes[team][voterName] = targetName;
+  if (!t.teams[team].members.includes(targetName)) return { error: '같은 팀원에게만 투표할 수 있어요.' };
+  t.swap.votes[team][voterName] = targetName; // 팀장 포함, 자기 자신도 가능
   // 양 팀 모두 전원 투표 완료 시 자동 집계
   const allVoted = ['A', 'B'].every((tm) => t.teams[tm].members.every((m) => t.swap.votes[tm][m]));
   if (allVoted) return resolveSwap(t);
@@ -104,15 +103,15 @@ function tallyVote(t, team) {
   for (const target of Object.values(t.swap.votes[team])) counts[target] = (counts[target] || 0) + 1;
   const max = Math.max(0, ...Object.values(counts));
   const top = Object.keys(counts).filter((k) => counts[k] === max);
-  return top.length ? pick(top) : pick(nonLeaders(t.teams[team]));
+  return top.length ? pick(top) : pick(t.teams[team].members);
 }
 
 // 실제 1:1 교환 수행 후 다음 타임으로.
 function resolveSwap(t) {
   let aOut, bOut; // aOut: A→B 이동, bOut: B→A 이동
   if (t.swap.method === 'random') {
-    aOut = pick(nonLeaders(t.teams.A));
-    bOut = pick(nonLeaders(t.teams.B));
+    aOut = pick(t.teams.A.members);
+    bOut = pick(t.teams.B.members);
   } else if (t.swap.method === 'leader') {
     // picks[A]는 A가 데려올 사람(B 소속) → B→A 이동, picks[B]는 A→B 이동
     bOut = t.swap.picks.A;
@@ -123,7 +122,11 @@ function resolveSwap(t) {
   }
   t.teams.A.members = t.teams.A.members.filter((m) => m !== aOut).concat(bOut);
   t.teams.B.members = t.teams.B.members.filter((m) => m !== bOut).concat(aOut);
-  t.lastSwap = { method: t.swap.method, AtoB: aOut, BtoA: bOut };
+  // 팀장이 교환되면 그 팀에 새로 들어온 사람이 새 팀장이 됨 (각 팀 팀장 1명 유지).
+  const leaderChange = {};
+  if (aOut === t.teams.A.leader) { t.teams.A.leader = bOut; leaderChange.A = bOut; }
+  if (bOut === t.teams.B.leader) { t.teams.B.leader = aOut; leaderChange.B = aOut; }
+  t.lastSwap = { method: t.swap.method, AtoB: aOut, BtoA: bOut, leaderChange };
   t.swap = null;
   t.timeIndex += 1;
   t.teamScore = { A: 0, B: 0 };

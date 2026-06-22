@@ -17,9 +17,16 @@
           `<div class="res-row"><span>${esc(r.chore)}</span><b class="loser">${esc(r.loserName)} (${esc(r.loserMembers.join('·'))})</b></div>`).join('')}</div>`
       : '';
 
+  const leaderNote = (s) => {
+    const c = s.leaderChange || {};
+    const parts = [];
+    if (c.A) parts.push(`A팀 새 팀장 👑 ${esc(c.A)}`);
+    if (c.B) parts.push(`B팀 새 팀장 👑 ${esc(c.B)}`);
+    return parts.length ? `<div class="leader-note">${parts.join(' · ')}</div>` : '';
+  };
   const swapBanner = (t) =>
     t.lastSwap
-      ? `<div class="swap-banner">🔄 교환 완료 — <b>${esc(t.lastSwap.AtoB)}</b> ↔ <b>${esc(t.lastSwap.BtoA)}</b> (${METHODS[t.lastSwap.method]})</div>`
+      ? `<div class="swap-banner">🔄 교환 완료 — <b>${esc(t.lastSwap.AtoB)}</b> ↔ <b>${esc(t.lastSwap.BtoA)}</b> (${METHODS[t.lastSwap.method]})${leaderNote(t.lastSwap)}</div>`
       : '';
 
   window.renderTournament = (room) => {
@@ -48,7 +55,7 @@
         <button class="btn small ghost" data-act="endTour">팀전 취소</button>`;
     } else if (t.phase === 'swapPrompt') {
       el.innerHTML = `<h2>🔄 팀원 바꾸기 찬스!</h2>
-        <p class="muted">1:1 교환 방법을 고르세요. (팀장 제외)</p>
+        <p class="muted">1:1 교환 방법을 고르세요. (팀장도 교환 대상! 🔥)</p>
         <div class="method-grid">
           <button class="btn primary" data-act="swap" data-m="random">🎲 랜덤</button>
           <button class="btn primary" data-act="swap" data-m="leader">👑 팀장 지정</button>
@@ -125,13 +132,13 @@
       if (!isLeader(t, name)) return `<p class="muted">팀장이 교환 대상을 지정하는 중...</p>`;
       if (t.swap.picks[myTeam]) return `<p class="muted">지목 완료: <b>${esc(t.swap.picks[myTeam])}</b></p>`;
       const opp = myTeam === 'A' ? 'B' : 'A';
-      const cands = t.teams[opp].members.filter((m) => m !== t.teams[opp].leader);
-      return `<p class="swap-q">상대 팀에서 데려올 사람을 골라요 👇</p>
+      const cands = t.teams[opp].members; // 팀장 포함
+      return `<p class="swap-q">상대 팀에서 데려올 사람을 골라요 👇 (팀장도 OK)</p>
         <div class="pick-grid">${cands.map((c) => `<button class="btn pick" data-act="pick" data-target="${esc(c)}">${esc(c)}</button>`).join('')}</div>`;
     }
     if (t.swap.method === 'vote') {
-      const cands = t.teams[myTeam].members.filter((m) => m !== t.teams[myTeam].leader);
-      return `<p class="swap-q">우리 팀에서 상대로 "보낼 사람"에 투표 🗳️</p>
+      const cands = t.teams[myTeam].members; // 팀장 포함 (팀장 추방 가능)
+      return `<p class="swap-q">우리 팀에서 상대로 "보낼 사람"에 투표 🗳️ (팀장도 가능!)</p>
         <div class="pick-grid">${cands.map((c) => `<button class="btn pick" data-act="vote" data-target="${esc(c)}">${esc(c)}</button>`).join('')}</div>`;
     }
     return `<p class="muted">🎲 랜덤 교환 중...</p>`;

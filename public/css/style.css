@@ -178,6 +178,7 @@ input:focus { border-color: var(--accent2); }
 .tour-results h3 { font-size: 13px; color: var(--muted); margin: 0 0 4px; }
 .tour-results.final .res-row { font-size: 16px; }
 .swap-banner { background: var(--card2); border: 1px dashed var(--good); border-radius: 10px; padding: 10px; font-size: 13px; text-align: center; margin: 8px 0; }
+.leader-note { margin-top: 6px; font-size: 12px; color: var(--accent); font-weight: 700; }
 .team-tag { display: inline-block; padding: 4px 12px; border-radius: 20px; font-weight: 800; font-size: 14px; margin-bottom: 8px; }
 .team-tag.team-A { background: rgba(91,140,255,.18); color: var(--accent2); }
 .team-tag.team-B { background: rgba(255,107,74,.18); color: var(--accent); }
