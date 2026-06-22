@@ -9,6 +9,9 @@ let lastRoom = null;
 
 const show = (name) => { for (const k in screens) screens[k].classList.toggle('active', k === name); };
 
+// 토너먼트 UI 모듈(tournament-ui.js)과 공유할 참조
+window.App = { socket, $, esc, getMyName: () => myName };
+
 // ---- 입장 동작 -----------------------------------------------------------
 function claim(name) {
   socket.emit('claim', { name }, (res) => {
@@ -41,6 +44,7 @@ socket.on('room:update', (room) => {
   renderHome(room);
   if (screens.player.classList.contains('active')) renderPlayer(room);
   if (screens.host.classList.contains('active')) renderHost(room);
+  window.renderTournament?.(room);
 });
 socket.on('you:update', renderYou);
 socket.on('host:reveal', renderReveal);

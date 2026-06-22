@@ -153,3 +153,34 @@ input:focus { border-color: var(--accent2); }
 .order-list li { padding: 8px 0; border-bottom: 1px solid var(--line); }
 .order-list li:last-child { border-bottom: none; }
 .order-list .no { color: var(--accent2); font-weight: 800; margin-right: 8px; }
+
+/* ---- 팀전 토너먼트 ---- */
+.muted { color: var(--muted); font-size: 13px; }
+.chore-head { font-size: 15px; margin: 8px 0; }
+.chore-head b { color: var(--accent); }
+.team-block { background: var(--card2); border-radius: 12px; padding: 12px; margin: 10px 0; border-left: 4px solid var(--line); }
+.team-A { border-left-color: var(--accent2); }
+.team-B { border-left-color: var(--accent); }
+.team-top { display: flex; justify-content: space-between; align-items: center; }
+.team-score { font-size: 26px; font-weight: 900; color: var(--good); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+.chip { background: var(--bg); border: 1px solid var(--line); border-radius: 20px; padding: 4px 10px; font-size: 13px; }
+.chip.leader { border-color: var(--accent); color: var(--accent); font-weight: 700; }
+.method-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin: 12px 0; }
+.method-grid .btn { margin: 0; padding: 12px 4px; font-size: 14px; }
+.pick-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin: 10px 0; }
+.btn.pick { margin: 0; background: var(--card2); border: 1px solid var(--accent2); color: var(--text); padding: 14px 4px; }
+.swap-q { font-weight: 700; text-align: center; margin: 10px 0 4px; }
+.res-row { display: flex; justify-content: space-between; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
+.res-row:last-child { border-bottom: none; }
+.res-row .loser { color: var(--accent); text-align: right; }
+.tour-results { margin-top: 12px; }
+.tour-results h3 { font-size: 13px; color: var(--muted); margin: 0 0 4px; }
+.tour-results.final .res-row { font-size: 16px; }
+.swap-banner { background: var(--card2); border: 1px dashed var(--good); border-radius: 10px; padding: 10px; font-size: 13px; text-align: center; margin: 8px 0; }
+.team-tag { display: inline-block; padding: 4px 12px; border-radius: 20px; font-weight: 800; font-size: 14px; margin-bottom: 8px; }
+.team-tag.team-A { background: rgba(91,140,255,.18); color: var(--accent2); }
+.team-tag.team-B { background: rgba(255,107,74,.18); color: var(--accent); }
+.team-scores { font-size: 22px; font-weight: 900; text-align: center; margin: 6px 0; }
+.team-scores .team-A { color: var(--accent2); }
+.team-scores .team-B { color: var(--accent); }

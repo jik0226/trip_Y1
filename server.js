@@ -7,6 +7,10 @@ import { createServer } from 'http';
 import { Server } from 'socket.io';
 import { GAMES } from './games.js';
 import { NAMES } from './players.js';
+import {
+  initTournament, startTournament, addTeamScore, endTime, startSwap,
+  leaderPick, castVote, forceResolve, teamOf, tournamentPublic,
+} from './tournament.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -18,6 +22,7 @@ app.use(express.static(join(__dirname, 'public')));
 const room = {
   hostId: null,
   game: null,
+  tournament: initTournament(),
   players: new Map(
     NAMES.map((name) => [name, { name, team: null, score: 0, connected: false, socketId: null }])
   ),
@@ -26,7 +31,7 @@ const room = {
 const publicState = () => ({
   players: NAMES.map((n) => {
     const p = room.players.get(n);
-    return { id: n, name: n, team: p.team, score: p.score, connected: p.connected };
+    return { id: n, name: n, team: teamOf(room.tournament, n), score: p.score, connected: p.connected };
   }),
   hostId: room.hostId,
   game: room.game
@@ -35,6 +40,7 @@ const publicState = () => ({
   games: Object.values(GAMES).map((g) => ({
     id: g.id, name: g.name, emoji: g.emoji, desc: g.desc, minPlayers: g.minPlayers,
   })),
+  tournament: tournamentPublic(room.tournament),
 });
 
 const broadcast = () => io.emit('room:update', publicState());
@@ -116,6 +122,35 @@ io.on('connection', (socket) => {
       sendYou();
       io.to(socket.id).emit('host:reveal', null);
     }));
+
+  // --- 팀전 토너먼트 ---
+  const relay = (res) => { if (res?.error) io.to(socket.id).emit('host:error', res.error); broadcast(); };
+
+  socket.on('host:startTournament', () =>
+    asHost(() => { room.tournament = startTournament(); broadcast(); }));
+
+  socket.on('host:teamScore', ({ team, delta }) =>
+    asHost(() => { addTeamScore(room.tournament, team, delta); broadcast(); }));
+
+  socket.on('host:endTime', () => asHost(() => relay(endTime(room.tournament))));
+
+  socket.on('host:startSwap', ({ method }) => asHost(() => relay(startSwap(room.tournament, method))));
+
+  socket.on('host:forceSwap', () => asHost(() => relay(forceResolve(room.tournament))));
+
+  socket.on('host:endTournament', () =>
+    asHost(() => { room.tournament = initTournament(); broadcast(); }));
+
+  // 팀장 지정 / 다수결 투표 — 참가자 본인 소켓에서 발생
+  socket.on('leader:pick', ({ target }) => {
+    if (!socket.data.name) return;
+    relay(leaderPick(room.tournament, socket.data.name, target));
+  });
+
+  socket.on('swap:vote', ({ target }) => {
+    if (!socket.data.name) return;
+    relay(castVote(room.tournament, socket.data.name, target));
+  });
 
   socket.on('disconnect', () => {
     if (room.hostId === socket.id) room.hostId = null;
