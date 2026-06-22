@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>🐙 가평 여행 게임방</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <!-- 홈: 이름 선택 -->
+  <section id="home" class="screen active">
+    <div class="hero">
+      <div class="logo">🐙</div>
+      <h1>가평 여행 게임방</h1>
+      <p class="sub">자기 이름을 골라서 들어오세요</p>
+    </div>
+    <div id="nameGrid" class="name-grid"></div>
+    <p id="homeError" class="error"></p>
+    <button id="hostModeBtn" class="btn ghost">🎮 진행자 모드로 들어가기</button>
+  </section>
+
+  <!-- 참가자 화면 -->
+  <section id="player" class="screen">
+    <header class="topbar">
+      <div class="me" id="pMe"></div>
+      <button id="toHostBtn" class="btn small ghost">🎮 진행자</button>
+    </header>
+    <div id="youCard" class="you-card hidden"></div>
+    <div class="card">
+      <h2>내 현황</h2>
+      <div class="stat-row"><span>이름</span><b id="pName">-</b></div>
+      <div class="stat-row"><span>팀</span><b id="pTeam">미정</b></div>
+      <div class="stat-row"><span>점수</span><b id="pScore">0</b></div>
+    </div>
+    <div class="card" id="pShared"></div>
+    <div class="card">
+      <h2>참가자 현황</h2>
+      <ul id="pPlayers" class="player-list"></ul>
+    </div>
+    <button id="leaveBtn" class="btn ghost">이름 다시 고르기</button>
+  </section>
+
+  <!-- 진행자 화면 -->
+  <section id="host" class="screen">
+    <header class="topbar">
+      <div>진행자 🎮</div>
+      <button id="backToPlayerBtn" class="btn small ghost hidden">← 내 화면</button>
+    </header>
+    <div id="hReveal" class="reveal hidden"></div>
+    <div class="card">
+      <h2>게임 선택</h2>
+      <div id="hGames" class="game-grid"></div>
+      <button id="hEndBtn" class="btn ghost hidden">게임 종료</button>
+    </div>
+    <div class="card">
+      <h2>참가자 · 점수</h2>
+      <ul id="hPlayers" class="player-list host-list"></ul>
+      <button id="hResetBtn" class="btn small ghost">점수 전체 초기화</button>
+    </div>
+    <p id="hError" class="error"></p>
+  </section>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,19 @@
+{
+  "name": "class-trip-game",
+  "version": "0.1.0",
+  "description": "반 여행용 신서유기 게임 진행 도우미 (실시간)",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "test": "node smoketest.mjs"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "socket.io": "^4.8.1"
+  },
+  "devDependencies": {
+    "socket.io-client": "^4.8.1"
+  }
+}

@@ -1,0 +1,150 @@
+// Client: pick your name, see your private mission, optionally run the host panel.
+const socket = io();
+const $ = (id) => document.getElementById(id);
+const screens = { home: $('home'), player: $('player'), host: $('host') };
+
+let myName = null;   // 내가 고른 이름 (플레이어로 입장한 경우)
+let isHost = false;  // 이 폰이 진행자 컨트롤을 켰는지
+let lastRoom = null;
+
+const show = (name) => { for (const k in screens) screens[k].classList.toggle('active', k === name); };
+
+// ---- 입장 동작 -----------------------------------------------------------
+function claim(name) {
+  socket.emit('claim', { name }, (res) => {
+    if (!res?.ok) return ($('homeError').textContent = res?.error || '입장 실패');
+    myName = name;
+    sessionStorage.setItem('myName', name);
+    isHost = false;
+    show('player');
+  });
+}
+
+$('hostModeBtn').onclick = () => socket.emit('becomeHost', null, () => { isHost = true; updateHostBack(); show('host'); });
+$('toHostBtn').onclick = () => socket.emit('becomeHost', null, () => { isHost = true; updateHostBack(); show('host'); });
+$('backToPlayerBtn').onclick = () => show('player');
+$('leaveBtn').onclick = () => { sessionStorage.removeItem('myName'); myName = null; show('home'); };
+$('hEndBtn').onclick = () => socket.emit('host:endGame');
+$('hResetBtn').onclick = () => { if (confirm('모든 점수를 0으로 초기화할까요?')) socket.emit('host:resetScores'); };
+
+const updateHostBack = () => $('backToPlayerBtn').classList.toggle('hidden', !myName);
+
+// 새로고침 시 자동 재입장
+window.addEventListener('load', () => {
+  const saved = sessionStorage.getItem('myName');
+  if (saved) claim(saved);
+});
+
+// ---- 서버 이벤트 ----------------------------------------------------------
+socket.on('room:update', (room) => {
+  lastRoom = room;
+  renderHome(room);
+  if (screens.player.classList.contains('active')) renderPlayer(room);
+  if (screens.host.classList.contains('active')) renderHost(room);
+});
+socket.on('you:update', renderYou);
+socket.on('host:reveal', renderReveal);
+socket.on('host:error', (m) => { $('hError').textContent = m; setTimeout(() => ($('hError').textContent = ''), 4000); });
+socket.on('bumped', () => { alert('다른 기기에서 같은 이름으로 접속했어요.'); sessionStorage.removeItem('myName'); location.reload(); });
+
+// ---- 홈: 이름 카드 --------------------------------------------------------
+function renderHome(room) {
+  $('nameGrid').innerHTML = room.players.map((p) => `
+    <button class="name-card ${p.connected ? 'taken' : ''}" data-name="${esc(p.name)}">
+      <span class="nm">${esc(p.name)}</span>
+      <span class="st">${p.connected ? '접속중' : '비어있음'}</span>
+    </button>`).join('');
+  $('nameGrid').querySelectorAll('.name-card').forEach((b) => {
+    b.onclick = () => { $('homeError').textContent = ''; claim(b.dataset.name); };
+  });
+}
+
+// ---- 참가자 ---------------------------------------------------------------
+function renderPlayer(room) {
+  const me = room.players.find((p) => p.name === myName);
+  if (me) {
+    $('pMe').textContent = `${me.name}${room.hostId && isHost ? ' (진행자)' : ''}`;
+    $('pName').textContent = me.name;
+    $('pTeam').textContent = me.team || '미정';
+    $('pScore').textContent = me.score;
+  }
+  $('pPlayers').innerHTML = room.players.map(playerRow).join('');
+  renderShared($('pShared'), room.game);
+}
+
+function renderYou(mine) {
+  const el = $('youCard');
+  if (!mine) { el.classList.add('hidden'); el.innerHTML = ''; return; }
+  el.classList.remove('hidden');
+  el.innerHTML = `<div class="role">${esc(mine.title || mine.role || '내 미션')}</div>
+    ${mine.secret ? `<div class="secret">${esc(mine.secret)}</div>` : ''}
+    <div class="ment">${esc(mine.ment || '')}</div>`;
+}
+
+function renderShared(el, game) {
+  if (!game || !game.public || !Object.keys(game.public).length) {
+    el.innerHTML = `<h2>현재 게임</h2><p style="color:var(--muted)">진행자가 게임을 고르면 여기에 떠요.</p>`;
+    return;
+  }
+  const g = game.public;
+  el.innerHTML = `<h2>${esc(game.emoji || '')} ${esc(game.name)}</h2>
+    ${g.headline ? `<div class="shared-headline">${esc(g.headline)}</div>` : ''}
+    ${g.rule ? `<div class="shared-rule">${esc(g.rule)}</div>` : ''}
+    ${g.order ? `<ul class="order-list">${g.order.map((o) =>
+      `<li><span class="no">${o.no}</span>${esc(o.name)}</li>`).join('')}</ul>` : ''}`;
+}
+
+function playerRow(p) {
+  return `<li>
+    <span class="dot ${p.connected ? '' : 'off'}"></span>
+    <span class="pname">${esc(p.name)}</span>
+    ${p.team ? `<span class="pteam">${esc(p.team)}</span>` : ''}
+    <span class="pscore">${p.score}</span>
+  </li>`;
+}
+
+// ---- 진행자 ---------------------------------------------------------------
+function renderHost(room) {
+  $('hEndBtn').classList.toggle('hidden', !room.game);
+  $('hGames').innerHTML = (room.games || []).map((g) => `
+    <div class="game-btn" data-game="${g.id}">
+      <div class="emoji">${esc(g.emoji)}</div>
+      <div class="gname">${esc(g.name)}</div>
+      <div class="gdesc">${esc(g.desc)}</div>
+    </div>`).join('');
+  $('hGames').querySelectorAll('.game-btn').forEach((btn) => {
+    btn.onclick = () => socket.emit('host:startGame', { gameId: btn.dataset.game });
+  });
+
+  $('hPlayers').innerHTML = room.players.map((p) => `
+    <li data-id="${esc(p.name)}">
+      <span class="dot ${p.connected ? '' : 'off'}"></span>
+      <span class="pname">${esc(p.name)}</span>
+      <span class="score-ctrl">
+        <button data-act="minus">−</button>
+        <span class="pscore">${p.score}</span>
+        <button data-act="plus">＋</button>
+      </span>
+    </li>`).join('');
+  $('hPlayers').querySelectorAll('li').forEach((li) => {
+    const id = li.dataset.id;
+    li.querySelector('[data-act="plus"]').onclick = () => socket.emit('host:addScore', { playerId: id, delta: 1 });
+    li.querySelector('[data-act="minus"]').onclick = () => socket.emit('host:addScore', { playerId: id, delta: -1 });
+  });
+  updateHostBack();
+}
+
+function renderReveal(info) {
+  const el = $('hReveal');
+  if (!info) { el.classList.add('hidden'); el.innerHTML = ''; return; }
+  el.classList.remove('hidden');
+  el.innerHTML = `<div class="small">정답 (진행자만 보임)</div>
+    <div class="answer">${esc(info.answer || '-')}</div>
+    <div class="small">순서: ${(info.order || []).map(esc).join(' → ')}</div>`;
+}
+
+// ---- util -----------------------------------------------------------------
+function esc(s) {
+  return String(s ?? '').replace(/[&<>"']/g, (c) =>
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
