@@ -216,3 +216,18 @@ input:focus { border-color: var(--accent2); }
 .sq-btns .btn { margin: 0; padding: 20px 0; font-size: 18px; }
 .sq-btns .pass { background: var(--card2); border: 1px solid var(--line); color: var(--muted); }
 .sq-btns .correct { background: var(--good); color: #062; }
+
+/* ---- 라이어게임 ---- */
+.liar-card { border-radius: var(--radius); padding: 20px 16px; text-align: center; margin: 8px 0; }
+.liar-card.citizen { background: linear-gradient(135deg, #1d2740, #20283a); border: 1px solid var(--accent2); }
+.liar-card.liar { background: linear-gradient(135deg, #3a1d1d, #2a1a20); border: 1px solid var(--accent); }
+.liar-card .role { font-size: 16px; font-weight: 800; }
+.liar-card .liar-cat { font-size: 13px; color: var(--muted); margin-top: 6px; }
+.liar-card .secret { font-size: 34px; font-weight: 900; margin: 10px 0; }
+.liar-card .ment { font-size: 13px; color: var(--text); line-height: 1.5; margin-top: 6px; }
+.liar-reveal { text-align: center; font-size: 20px; font-weight: 800; margin: 6px 0; }
+.liar-reveal b, .liar-word b { color: var(--accent); }
+.liar-word { text-align: center; font-size: 15px; margin: 4px 0; }
+.liar-win { text-align: center; font-size: 22px; font-weight: 900; color: var(--good); margin: 10px 0; }
+.order-inline { margin: 8px 0; padding-left: 20px; font-size: 14px; }
+.order-inline li { display: inline; margin-right: 8px; }

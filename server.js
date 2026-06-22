@@ -18,6 +18,8 @@ import {
   initSpeedQuiz, startSpeedQuiz, sqWord, sqSetFirst, sqSetPresenter,
   sqBegin, sqCorrect, sqPass, sqEndRound, speedQuizPublic,
 } from './speedquiz.js';
+import { LIAR_TOPICS } from './liargames.js';
+import { initLiar, liarPublic, registerLiar } from './liar.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -31,6 +33,7 @@ const room = {
   game: null,
   tournament: initTournament(),
   speedquiz: initSpeedQuiz(),
+  liar: initLiar(),
   players: new Map(
     NAMES.map((name) => [name, { name, team: null, score: 0, connected: false, socketId: null, clientId: null }])
   ),
@@ -68,6 +71,8 @@ const publicState = () => ({
   })),
   tournament: tournamentPublic(room.tournament),
   speedquiz: speedQuizPublic(room.speedquiz),
+  liar: liarPublic(room.liar),
+  liarCategories: Object.keys(LIAR_TOPICS),
 });
 
 const broadcast = () => io.emit('room:update', publicState());
@@ -242,6 +247,9 @@ io.on('connection', (socket) => {
   // 출제자 본인 조작
   socket.on('sq:correct', () => { if (!sqCorrect(room.speedquiz, socket.data.name).error) { broadcast(); sendSqWord(); } });
   socket.on('sq:pass', () => { if (!sqPass(room.speedquiz, socket.data.name).error) { broadcast(); sendSqWord(); } });
+
+  // 라이어게임 (핸들러는 liar.js)
+  registerLiar(socket, { io, room, broadcast, asHost, relay });
 
   // 팀장 지정 / 다수결 투표 — 참가자 본인 소켓에서 발생
   socket.on('leader:pick', ({ target }) => {

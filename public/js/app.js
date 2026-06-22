@@ -58,6 +58,7 @@ socket.on('room:update', (room) => {
   if (screens.host.classList.contains('active')) renderHost(room);
   window.renderTournament?.(room);
   window.renderSpeedQuiz?.(room);
+  window.renderLiar?.(room);
 });
 socket.on('you:update', renderYou);
 socket.on('host:reveal', renderReveal);
