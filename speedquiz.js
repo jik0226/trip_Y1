@@ -1,6 +1,7 @@
 // 출제자 스피드 퀴즈 상태 기계 (순수 함수). 타이머 자체는 server.js가 setTimeout으로 관리.
 // 흐름: setup → (선공팀 출제자 지정 → beginRound → 정답/패스 → 시간종료) → between → 같은 방식 후공팀 → done(승부)
 import { SPEED_GAMES } from './speedgames.js';
+import { addTeamScore, teamOf } from './tournament.js';
 
 const shuffle = (arr) => {
   const a = [...arr];
@@ -90,6 +91,57 @@ export function sqEndRound(s) {
     s.phase = 'between';
   }
   return { ok: true, finished: s.phase === 'done', winner: s.winner };
+}
+
+// 타이머(전역 싱글톤) + 소켓 핸들러. server.js에서 한 번 setup 후 connection마다 register 호출.
+export function setupSpeedQuiz({ io, room, broadcast }) {
+  let sqTimer = null;
+  const stopSqTimer = () => { if (sqTimer) { clearTimeout(sqTimer); sqTimer = null; } };
+  const socketOf = (name) => { const p = name && room.players.get(name); return p?.socketId || null; };
+  const sendSqWord = () => {
+    const s = room.speedquiz;
+    if (!s.active || s.phase !== 'playing') return;
+    const sid = socketOf(s.presenter[s.currentTeam]);
+    if (sid) io.to(sid).emit('sq:word', { word: sqWord(s) });
+  };
+  const clearSqWord = () => {
+    for (const t of ['A', 'B']) { const sid = socketOf(room.speedquiz.presenter?.[t]); if (sid) io.to(sid).emit('sq:word', null); }
+  };
+  const finishRound = () => {
+    const r = sqEndRound(room.speedquiz);
+    stopSqTimer(); clearSqWord();
+    if (r.finished && r.winner && r.winner !== 'draw' && room.tournament.active) addTeamScore(room.tournament, r.winner, 1);
+    broadcast();
+    return r;
+  };
+  const armSqTimer = () => {
+    stopSqTimer();
+    const s = room.speedquiz;
+    if (s.active && s.phase === 'playing' && s.roundEndsAt) sqTimer = setTimeout(finishRound, Math.max(0, s.roundEndsAt - Date.now()));
+  };
+
+  return function registerSpeedQuiz(socket, { asHost, relay }) {
+    socket.on('host:sq:start', ({ variantId, duration }) => asHost(() => {
+      stopSqTimer(); room.game = null;
+      room.speedquiz = startSpeedQuiz(variantId, { duration }) || initSpeedQuiz();
+      if (!room.speedquiz.active) io.to(socket.id).emit('host:error', '게임을 찾을 수 없어요.');
+      broadcast();
+    }));
+    socket.on('host:sq:setFirst', ({ team }) => asHost(() => relay(sqSetFirst(room.speedquiz, team))));
+    socket.on('host:sq:setPresenter', ({ team, name }) => asHost(() => {
+      if (room.tournament.active && teamOf(room.tournament, name) !== team) return io.to(socket.id).emit('host:error', '그 팀 팀원만 출제자로 지정할 수 있어요.');
+      relay(sqSetPresenter(room.speedquiz, team, name));
+    }));
+    socket.on('host:sq:begin', () => asHost(() => {
+      const r = sqBegin(room.speedquiz, Date.now());
+      if (r.error) return io.to(socket.id).emit('host:error', r.error);
+      armSqTimer(); broadcast(); sendSqWord();
+    }));
+    socket.on('host:sq:endRound', () => asHost(() => { if (room.speedquiz.phase === 'playing') finishRound(); }));
+    socket.on('host:sq:end', () => asHost(() => { stopSqTimer(); room.speedquiz = initSpeedQuiz(); broadcast(); }));
+    socket.on('sq:correct', () => { if (!sqCorrect(room.speedquiz, socket.data.name).error) { broadcast(); sendSqWord(); } });
+    socket.on('sq:pass', () => { if (!sqPass(room.speedquiz, socket.data.name).error) { broadcast(); sendSqWord(); } });
+  };
 }
 
 // 클라이언트 공개 상태 — 현재 단어는 절대 포함하지 않음(출제자에게만 따로 전송).

@@ -155,6 +155,21 @@ export function setLeader(t, name) {
   return { ok: true };
 }
 
+// 소켓 핸들러 등록 (server.js connection 안에서 호출).
+export function registerTournament(socket, { room, broadcast, asHost, relay }) {
+  socket.on('host:startTournament', () => asHost(() => { room.tournament = startTournament(); broadcast(); }));
+  socket.on('host:teamScore', ({ team, delta }) => asHost(() => { addTeamScore(room.tournament, team, delta); broadcast(); }));
+  socket.on('host:endTime', () => asHost(() => relay(endTime(room.tournament))));
+  socket.on('host:startSwap', ({ method }) => asHost(() => relay(startSwap(room.tournament, method))));
+  socket.on('host:forceSwap', () => asHost(() => relay(forceResolve(room.tournament))));
+  socket.on('host:endTournament', () => asHost(() => { room.tournament = initTournament(); broadcast(); }));
+  socket.on('host:movePlayer', ({ name, toTeam }) => asHost(() => relay(movePlayer(room.tournament, name, toTeam))));
+  socket.on('host:setLeader', ({ name }) => asHost(() => relay(setLeader(room.tournament, name))));
+  // 팀장 지정 / 다수결 투표 — 참가자 본인 소켓에서 발생
+  socket.on('leader:pick', ({ target }) => { if (socket.data.name) relay(leaderPick(room.tournament, socket.data.name, target)); });
+  socket.on('swap:vote', ({ target }) => { if (socket.data.name) relay(castVote(room.tournament, socket.data.name, target)); });
+}
+
 // 클라이언트로 보낼 공개 상태.
 export function tournamentPublic(t) {
   if (!t.active) return null;
