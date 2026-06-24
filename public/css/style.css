@@ -283,3 +283,4 @@ input:focus { border-color: var(--accent2); }
 .quiz-q { font-size: 22px; font-weight: 800; text-align: center; margin: 14px 0; line-height: 1.4; word-break: keep-all; }
 .quiz-a { text-align: center; font-size: 15px; color: var(--muted); margin: 6px 0; }
 .quiz-a b { color: var(--good); }
+a.btn { display: inline-block; text-align: center; text-decoration: none; }

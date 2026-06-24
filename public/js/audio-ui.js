@@ -22,7 +22,7 @@
   }
   loadYT();
 
-  socket.on('audio:song', (s) => { currentSong = s; });
+  socket.on('audio:song', (s) => { currentSong = s; if (window.__lastRoom) renderHost(window.__lastRoom); });
 
   function play() {
     if (!(ytReady && ytPlayer && currentSong && currentSong.videoId)) return;
@@ -67,15 +67,19 @@
     }
     const done = s.idx >= s.total;
     const noId = currentSong && !currentSong.videoId;
+    const ytSearchUrl = currentSong?.title
+      ? `https://www.youtube.com/results?search_query=${encodeURIComponent(currentSong.title)}` : '#';
     el.innerHTML = `<h2>${esc(s.emoji)} ${esc(s.label)} (${Math.min(s.idx + 1, s.total)}/${s.total})</h2>
       ${done ? '<div class="quiz-q">곡 모두 재생 완료!</div>'
         : `<div class="quiz-a">현재 곡(진행자만): <b>${esc(currentSong?.title || '...')}</b></div>
-           ${noId ? '<p class="error">이 곡은 videoId가 비어 있어 재생 안 돼요 (songgames.js에 채우기)</p>' : ''}
+           ${noId ? '<p class="muted">⚠️ videoId 비어있음 — 아래 "유튜브 검색"으로 직접 재생</p>' : ''}
            <div class="coin-btns">
-             <button class="btn primary" data-act="aplay">▶ 재생 (${s.label.includes('1초') ? '1초' : s.label.includes('3초') ? '3초' : '30초'})</button>
+             <button class="btn primary" data-act="aplay" ${noId ? 'disabled' : ''}>▶ 재생 (${s.label.includes('1초') ? '1초' : s.label.includes('3초') ? '3초' : '30초'})</button>
              <button class="btn" data-act="astop">⏹ 정지</button>
+             <a class="btn small" href="${ytSearchUrl}" target="_blank" rel="noopener">🔎 유튜브 검색</a>
              <button class="btn small ghost" data-act="areveal">정답 공개</button>
-           </div>`}
+           </div>
+           <p class="muted">▶가 안 먹으면 🔎로 새 탭에서 직접 재생 (모바일 자동재생 정책 안전망)</p>`}
       ${scoreLine(s)}
       ${done ? '<button class="btn primary" data-act="afinish">결과 보기 🏆</button>'
         : `<div class="win-grid">

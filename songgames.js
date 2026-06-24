@@ -1,8 +1,8 @@
-// 오디오 게임 — 진행자 폰에서 유튜브 IFrame으로 재생, 곡 정체는 진행자만 본다.
+// 오디오 게임 — 진행자 폰에서 유튜브 IFrame으로 재생, 곡 정체는 진행자만.
 //
-// ⚠️ videoId는 실제 유튜브 영상 ID로 채워야 재생됩니다 (예시값은 비어 있음).
+// ⚠️ videoId 솔직 고지: 학습 데이터로 추정한 ID라 일부 안 먹을 수 있어요(영상 삭제·지역 차단·잘못된 매칭).
+//    실제 사용 전 진행자 폰에서 한 번씩 ▶ 재생 확인해보고, 안 되면 "🔎 유튜브 검색" 버튼으로 직접 트세요.
 //    유튜브 URL이 https://youtu.be/ABC123 또는 watch?v=ABC123 이면 videoId는 "ABC123".
-//    start = 재생 시작 초(후렴 시작 지점 등). 친구들이 다 아는 곡으로 미리 채워두세요.
 
 export const AUDIO_MODES = {
   song1s: { label: '1초 듣고 노래 맞히기', emoji: '🎧', sec: 1, hideTitle: true },
@@ -10,9 +10,28 @@ export const AUDIO_MODES = {
   randomdance: { label: '랜덤 플레이 댄스', emoji: '💃', sec: 30, hideTitle: false },
 };
 
-// 곡 풀 (공용). title은 진행자/공개시에만, videoId는 진행자에게만 전송.
+// 곡 풀. title은 진행자/공개시 표시, videoId는 진행자에게만 전송.
+// start = 후렴 또는 인트로 직전 위치(초). 1초 게임은 후렴 시작점이 좋음.
 export const SONGS = [
-  { title: '예시: 곡명 - 가수', videoId: '', start: 30 },
-  { title: '예시2: 곡명 - 가수', videoId: '', start: 0 },
-  // ↑ 실제 곡으로 교체/추가하세요. videoId 빈 항목은 재생되지 않습니다.
+  // K-pop 메가히트
+  { title: 'BTS - Dynamite', videoId: 'gdZLi9oWNZg', start: 41 },
+  { title: 'BTS - Butter', videoId: 'WMweEpGlu_U', start: 60 },
+  { title: 'NewJeans - Hype Boy', videoId: 'AVRYg5HXxxc', start: 22 },
+  { title: 'NewJeans - Super Shy', videoId: 'ArmDp-zijuc', start: 32 },
+  { title: 'IVE - Love Dive', videoId: 'Y8JFxS1HlDo', start: 50 },
+  { title: 'IVE - I AM', videoId: '6ZUIwj3FgUY', start: 56 },
+  { title: 'aespa - Next Level', videoId: '4TWR90KJl84', start: 60 },
+  { title: 'BLACKPINK - DDU-DU DDU-DU', videoId: 'IHNzOHi8sJs', start: 60 },
+  { title: 'BLACKPINK - How You Like That', videoId: 'ioNng23DkIM', start: 60 },
+  { title: 'TWICE - TT', videoId: 'ePpPVE-GGJw', start: 65 },
+  { title: 'PSY - 강남스타일', videoId: '9bZkp7q19f0', start: 56 },
+  { title: 'BIGBANG - 뱅뱅뱅', videoId: '2ips2mM7Zqw', start: 30 },
+  { title: '아이유 - 좋은 날', videoId: 'jeqdYqsrsA0', start: 55 },
+  { title: '아이유 - Blueming', videoId: 'D1PvIWdJ8xo', start: 40 },
+  { title: 'LE SSERAFIM - ANTIFRAGILE', videoId: 'WfvxA0ekHkk', start: 33 },
+  { title: 'NewJeans - OMG', videoId: 'Mlz4VYW_cWA', start: 48 },
+  { title: 'BTS - Boy With Luv', videoId: 'XsX3ATc3FbA', start: 60 },
+  { title: 'aespa - Spicy', videoId: 'BD2QmwoQwlc', start: 50 },
+  { title: 'IVE - After LIKE', videoId: 'F0B7HDiY-10', start: 55 },
+  { title: 'BLACKPINK - Pink Venom', videoId: 'gQlMMD8auMs', start: 50 },
 ];

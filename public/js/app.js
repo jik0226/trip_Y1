@@ -54,7 +54,7 @@ window.addEventListener('load', () => {
 
 // ---- 서버 이벤트 ----------------------------------------------------------
 socket.on('room:update', (room) => {
-  lastRoom = room;
+  lastRoom = room; window.__lastRoom = room;
   renderHome(room);
   if (screens.player.classList.contains('active')) renderPlayer(room);
   if (screens.host.classList.contains('active')) renderHost(room);
