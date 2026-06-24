@@ -3,6 +3,7 @@
 // 실제 게임 진행은 기존 컨트롤로(여기선 선택·공개·중복방지만 담당, 과결합 회피).
 import { SPEED_GAMES } from './speedgames.js';
 import { SIMPLE_GAMES } from './simplegames.js';
+import { WORD_GAMES } from './wordgames.js';
 
 const ABSTRACT = [
   '번개', '심장', '미궁', '운명', '폭풍', '정글', '가면', '나침반', '모래시계', '불꽃',
@@ -14,6 +15,7 @@ const REGISTRY = [
   ...Object.values(SPEED_GAMES).map((g) => ({ id: 'sq:' + g.id, name: g.name, emoji: g.emoji, kind: 'speed' })),
   { id: 'liar', name: '라이어게임', emoji: '🤥', kind: 'liar' },
   ...SIMPLE_GAMES.map((g) => ({ id: 'simple:' + g.id, name: g.name, emoji: g.emoji, kind: 'simple' })),
+  ...WORD_GAMES.map((g) => ({ id: 'word:' + g.id, name: g.name, emoji: g.emoji, kind: 'word' })),
 ];
 
 const shuffle = (arr) => {

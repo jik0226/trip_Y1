@@ -274,3 +274,6 @@ input:focus { border-color: var(--accent2); }
 .flow-reveal .kw { color: var(--accent2); }
 .flow-reveal b { color: var(--accent); }
 .flow-wait { text-align: center; color: var(--muted); font-size: 15px; margin: 12px 0; }
+
+/* ---- 이어말하기 주제 ---- */
+.word-prompt { font-size: 26px; font-weight: 900; text-align: center; color: var(--accent2); margin: 12px 0; word-break: keep-all; }

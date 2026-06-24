@@ -16,6 +16,7 @@ import { initLiar, liarPublic, registerLiar } from './liar.js';
 import { initSimple, simplePublic, simpleList, registerSimple } from './simple.js';
 import { initCoin, registerCoin } from './coin.js';
 import { initFlow, flowPublic, registerFlow } from './flow.js';
+import { initWord, wordPublic, wordList, registerWord } from './word.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -33,6 +34,7 @@ const room = {
   simple: initSimple(),
   coin: initCoin(),
   flow: initFlow(),
+  word: initWord(),
   players: new Map(
     NAMES.map((name) => [name, { name, team: null, score: 0, connected: false, socketId: null, clientId: null }])
   ),
@@ -76,6 +78,8 @@ const publicState = () => ({
   simpleGames: simpleList(),
   coin: room.coin,
   flow: flowPublic(room.flow),
+  word: wordPublic(room.word),
+  wordGames: wordList(),
 });
 
 const broadcast = () => io.emit('room:update', publicState());
@@ -181,6 +185,7 @@ io.on('connection', (socket) => {
   registerSimple(socket, { room, broadcast, asHost });
   registerCoin(socket, { room, broadcast, asHost });
   registerFlow(socket, { room, broadcast, asHost });
+  registerWord(socket, { room, broadcast, asHost });
 
   socket.on('disconnect', () => {
     if (room.hostId === socket.id) room.hostId = null;
