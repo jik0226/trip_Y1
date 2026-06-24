@@ -262,3 +262,15 @@ input:focus { border-color: var(--accent2); }
 .coin-opts .vs { margin: 0 12px; color: var(--line); font-size: 14px; }
 .coin-result { font-size: 32px; font-weight: 900; min-height: 40px; margin-top: 8px; }
 .coin-result b { color: var(--good); }
+
+/* ---- 키워드 게임 뽑기 ---- */
+.kw-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 10px 0; }
+.btn.kw-card {
+  margin: 0; padding: 22px 8px; font-size: 18px; font-weight: 800;
+  background: linear-gradient(135deg, #2a1d3a, #1d2740); border: 1px solid var(--accent2); color: var(--text);
+}
+.btn.kw-card:active { transform: scale(0.96); }
+.flow-reveal { text-align: center; font-size: 20px; font-weight: 800; margin: 12px 0; line-height: 1.5; }
+.flow-reveal .kw { color: var(--accent2); }
+.flow-reveal b { color: var(--accent); }
+.flow-wait { text-align: center; color: var(--muted); font-size: 15px; margin: 12px 0; }

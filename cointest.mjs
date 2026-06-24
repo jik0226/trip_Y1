@@ -5,6 +5,7 @@ const host=io(URL); await new Promise(r=>host.on('connect',r));
 await host.emitWithAck('claim',{name:'인겸',clientId:'c-인겸'});
 const p=io(URL); await new Promise(r=>p.on('connect',r)); await p.emitWithAck('claim',{name:'택윤',clientId:'c-택윤'});
 let R=null; p.on('room:update',s=>R=s); // 참가자도 동전 결과를 받는지(전원 화면)
+host.emit('host:coin:clear'); await wait(150); // 영속 서버의 이전 상태 정리(id 리셋)
 host.emit('host:coin:flip',{title:'선공 팀',options:['A팀','B팀']}); await wait(200);
 ok(R.coin && R.coin.id===1 && JSON.stringify(R.coin.options)===JSON.stringify(['A팀','B팀']),'동전 던지기 브로드캐스트(참가자 수신)');
 ok(R.coin.result===0||R.coin.result===1,`결과 0/1: ${R.coin.result} (${R.coin.options[R.coin.result]})`);
