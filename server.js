@@ -20,6 +20,7 @@ import {
 } from './speedquiz.js';
 import { LIAR_TOPICS } from './liargames.js';
 import { initLiar, liarPublic, registerLiar } from './liar.js';
+import { initSimple, simplePublic, simpleList, registerSimple } from './simple.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -34,6 +35,7 @@ const room = {
   tournament: initTournament(),
   speedquiz: initSpeedQuiz(),
   liar: initLiar(),
+  simple: initSimple(),
   players: new Map(
     NAMES.map((name) => [name, { name, team: null, score: 0, connected: false, socketId: null, clientId: null }])
   ),
@@ -73,6 +75,8 @@ const publicState = () => ({
   speedquiz: speedQuizPublic(room.speedquiz),
   liar: liarPublic(room.liar),
   liarCategories: Object.keys(LIAR_TOPICS),
+  simple: simplePublic(room.simple),
+  simpleGames: simpleList(),
 });
 
 const broadcast = () => io.emit('room:update', publicState());
@@ -250,6 +254,8 @@ io.on('connection', (socket) => {
 
   // 라이어게임 (핸들러는 liar.js)
   registerLiar(socket, { io, room, broadcast, asHost, relay });
+  // 룰 카드 게임 (핸들러는 simple.js)
+  registerSimple(socket, { room, broadcast, asHost });
 
   // 팀장 지정 / 다수결 투표 — 참가자 본인 소켓에서 발생
   socket.on('leader:pick', ({ target }) => {
