@@ -122,7 +122,7 @@ export function setupSpeedQuiz({ io, room, broadcast }) {
 
   return function registerSpeedQuiz(socket, { asHost, relay }) {
     socket.on('host:sq:start', ({ variantId, duration }) => asHost(() => {
-      stopSqTimer(); room.game = null;
+      stopSqTimer();
       room.speedquiz = startSpeedQuiz(variantId, { duration }) || initSpeedQuiz();
       if (!room.speedquiz.active) io.to(socket.id).emit('host:error', '게임을 찾을 수 없어요.');
       broadcast();

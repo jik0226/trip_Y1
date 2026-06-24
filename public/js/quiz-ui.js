@@ -29,6 +29,7 @@
   function renderHost(room) {
     const el = $('hQuiz'); if (!el) return;
     const s = room.quiz;
+    if (!s && window.App.anyGameActive(room)) { el.innerHTML = ''; return; }
     if (!s) {
       el.innerHTML = `<h2>❓ 퀴즈</h2><p class="muted">문제는 전원 화면, 정답은 진행자만 — 맞힌 팀 눌러요</p>
         <div class="coin-btns">${(room.quizCategories || []).map((c) => `

@@ -5,7 +5,6 @@ import { dirname, join } from 'path';
 import express from 'express';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
-import { GAMES } from './games.js';
 import { NAMES, DEFAULT_HOST } from './players.js';
 import { TEAM_CONFIG } from './teams.js';
 import { initTournament, teamOf, tournamentPublic, registerTournament } from './tournament.js';
@@ -29,7 +28,6 @@ app.use(express.static(join(__dirname, 'public')));
 // One room, players keyed by their (fixed) name.
 const room = {
   hostId: null,
-  game: null,
   tournament: initTournament(),
   speedquiz: initSpeedQuiz(),
   liar: initLiar(),
@@ -65,12 +63,6 @@ const publicState = () => ({
   hostName: nameOfSocket(room.hostId),
   defaultHost: DEFAULT_HOST,
   leaders: currentLeaders(),
-  game: room.game
-    ? { id: room.game.id, name: room.game.name, emoji: room.game.emoji, public: room.game.public }
-    : null,
-  games: Object.values(GAMES).map((g) => ({
-    id: g.id, name: g.name, emoji: g.emoji, desc: g.desc, minPlayers: g.minPlayers,
-  })),
   speedGames: Object.values(SPEED_GAMES).map((g) => ({
     id: g.id, name: g.name, emoji: g.emoji, keyword: g.keyword,
   })),
@@ -91,13 +83,6 @@ const publicState = () => ({
 });
 
 const broadcast = () => io.emit('room:update', publicState());
-
-const sendYou = () => {
-  for (const p of room.players.values()) {
-    if (!p.connected || !p.socketId) continue;
-    io.to(p.socketId).emit('you:update', room.game?.perPlayer?.[p.name] || null);
-  }
-};
 
 // 스피드 퀴즈 런타임(타이머 등)은 한 번만 생성 — connection마다 register만 호출.
 const registerSpeedQuiz = setupSpeedQuiz({ io, room, broadcast });
@@ -124,8 +109,6 @@ io.on('connection', (socket) => {
     if (name === DEFAULT_HOST && !room.hostId) room.hostId = socket.id;
     cb?.({ ok: true, name });
     broadcast();
-    io.to(socket.id).emit('you:update', room.game?.perPlayer?.[name] || null);
-    if (room.hostId === socket.id) io.to(socket.id).emit('host:reveal', room.game?.host || null);
     // 스피드 퀴즈 진행 중 출제자가 재접속하면 단어 다시 전송.
     const sq = room.speedquiz;
     if (sq.active && sq.phase === 'playing' && sq.presenter[sq.currentTeam] === name) {
@@ -139,7 +122,6 @@ io.on('connection', (socket) => {
     room.hostId = socket.id;
     cb?.({ ok: true });
     broadcast();
-    io.to(socket.id).emit('host:reveal', room.game?.host || null);
   });
 
   const asHost = (fn) => { if (room.hostId === socket.id) fn(); };
@@ -155,35 +137,6 @@ io.on('connection', (socket) => {
 
   socket.on('host:resetScores', () =>
     asHost(() => { for (const p of room.players.values()) p.score = 0; broadcast(); }));
-
-  socket.on('host:startGame', ({ gameId, config }) =>
-    asHost(() => {
-      const def = GAMES[gameId];
-      if (!def) return;
-      const participants = [...room.players.values()]
-        .filter((p) => p.connected)
-        .map((p) => ({ id: p.name, name: p.name, team: p.team, score: p.score }));
-      if (participants.length < (def.minPlayers || 1)) {
-        io.to(socket.id).emit('host:error', `${def.name}은(는) 최소 ${def.minPlayers}명 필요해요. (현재 ${participants.length}명 접속)`);
-        return;
-      }
-      const result = def.assign(participants, config || {});
-      room.game = {
-        id: def.id, name: def.name, emoji: def.emoji,
-        public: result.public || {}, perPlayer: result.perPlayer || {}, host: result.host || null,
-      };
-      broadcast();
-      sendYou();
-      io.to(socket.id).emit('host:reveal', room.game.host);
-    }));
-
-  socket.on('host:endGame', () =>
-    asHost(() => {
-      room.game = null;
-      broadcast();
-      sendYou();
-      io.to(socket.id).emit('host:reveal', null);
-    }));
 
   // --- 모듈별 이벤트 핸들러 등록 ---
   const relay = (res) => { if (res?.error) io.to(socket.id).emit('host:error', res.error); broadcast(); };

@@ -16,8 +16,11 @@ const clientId = (() => {
 
 const show = (name) => { for (const k in screens) screens[k].classList.toggle('active', k === name); };
 
-// 토너먼트 UI 모듈(tournament-ui.js)과 공유할 참조
-window.App = { socket, $, esc, getMyName: () => myName };
+// 게임 모듈들과 공유할 참조. anyGameActive: 어떤 게임이라도 진행 중인지(진행자 화면 정리용).
+window.App = {
+  socket, $, esc, getMyName: () => myName,
+  anyGameActive: (room) => !!(room.speedquiz || room.liar || room.simple || room.word || room.quiz || room.audio),
+};
 
 // ---- 입장 동작 -----------------------------------------------------------
 function claim(name) {
@@ -39,7 +42,6 @@ $('toHostBtn').onclick = () => socket.emit('becomeHost', null, (res) => {
 });
 $('backToPlayerBtn').onclick = () => show('player');
 $('leaveBtn').onclick = () => { sessionStorage.removeItem('myName'); myName = null; show('home'); };
-$('hEndBtn').onclick = () => socket.emit('host:endGame');
 $('hResetBtn').onclick = () => { if (confirm('모든 점수를 0으로 초기화할까요?')) socket.emit('host:resetScores'); };
 
 const updateHostBack = () => $('backToPlayerBtn').classList.toggle('hidden', !myName);
@@ -66,8 +68,6 @@ socket.on('room:update', (room) => {
   window.renderQuiz?.(room);
   window.renderAudio?.(room);
 });
-socket.on('you:update', renderYou);
-socket.on('host:reveal', renderReveal);
 socket.on('host:error', (m) => { $('hError').textContent = m; setTimeout(() => ($('hError').textContent = ''), 4000); });
 socket.on('bumped', () => { alert('다른 기기에서 같은 이름으로 접속했어요.'); sessionStorage.removeItem('myName'); location.reload(); });
 
@@ -97,29 +97,6 @@ function renderPlayer(room) {
     $('toHostBtn').classList.toggle('hidden', myName !== room.defaultHost);
   }
   $('pPlayers').innerHTML = room.players.map(playerRow).join('');
-  renderShared($('pShared'), room.game);
-}
-
-function renderYou(mine) {
-  const el = $('youCard');
-  if (!mine) { el.classList.add('hidden'); el.innerHTML = ''; return; }
-  el.classList.remove('hidden');
-  el.innerHTML = `<div class="role">${esc(mine.title || mine.role || '내 미션')}</div>
-    ${mine.secret ? `<div class="secret">${esc(mine.secret)}</div>` : ''}
-    <div class="ment">${esc(mine.ment || '')}</div>`;
-}
-
-function renderShared(el, game) {
-  if (!game || !game.public || !Object.keys(game.public).length) {
-    el.innerHTML = `<h2>현재 게임</h2><p style="color:var(--muted)">진행자가 게임을 고르면 여기에 떠요.</p>`;
-    return;
-  }
-  const g = game.public;
-  el.innerHTML = `<h2>${esc(game.emoji || '')} ${esc(game.name)}</h2>
-    ${g.headline ? `<div class="shared-headline">${esc(g.headline)}</div>` : ''}
-    ${g.rule ? `<div class="shared-rule">${esc(g.rule)}</div>` : ''}
-    ${g.order ? `<ul class="order-list">${g.order.map((o) =>
-      `<li><span class="no">${o.no}</span>${esc(o.name)}</li>`).join('')}</ul>` : ''}`;
 }
 
 function playerRow(p) {
@@ -133,17 +110,6 @@ function playerRow(p) {
 
 // ---- 진행자 ---------------------------------------------------------------
 function renderHost(room) {
-  $('hEndBtn').classList.toggle('hidden', !room.game);
-  $('hGames').innerHTML = (room.games || []).map((g) => `
-    <div class="game-btn" data-game="${g.id}">
-      <div class="emoji">${esc(g.emoji)}</div>
-      <div class="gname">${esc(g.name)}</div>
-      <div class="gdesc">${esc(g.desc)}</div>
-    </div>`).join('');
-  $('hGames').querySelectorAll('.game-btn').forEach((btn) => {
-    btn.onclick = () => socket.emit('host:startGame', { gameId: btn.dataset.game });
-  });
-
   $('hPlayers').innerHTML = room.players.map((p) => `
     <li data-id="${esc(p.name)}">
       <span class="dot ${p.connected ? '' : 'off'}"></span>
@@ -160,15 +126,6 @@ function renderHost(room) {
     li.querySelector('[data-act="minus"]').onclick = () => socket.emit('host:addScore', { playerId: id, delta: -1 });
   });
   updateHostBack();
-}
-
-function renderReveal(info) {
-  const el = $('hReveal');
-  if (!info) { el.classList.add('hidden'); el.innerHTML = ''; return; }
-  el.classList.remove('hidden');
-  el.innerHTML = `<div class="small">정답 (진행자만 보임)</div>
-    <div class="answer">${esc(info.answer || '-')}</div>
-    <div class="small">순서: ${(info.order || []).map(esc).join(' → ')}</div>`;
 }
 
 // ---- util -----------------------------------------------------------------

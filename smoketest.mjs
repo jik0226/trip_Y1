@@ -5,11 +5,6 @@ let pass = 0, fail = 0;
 const ok = (c, m) => (c ? (pass++, log('  ✅', m)) : (fail++, log('  ❌', m)));
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 const conn = (s) => new Promise((r) => s.on('connect', r));
-// 초기 null you:update를 무시하고 첫 유효 payload를 기다림
-const firstTruthy = (sock, ev, ms = 6000) => new Promise((r) => {
-  const h = (v) => { if (v) { sock.off(ev, h); r(v); } };
-  sock.on(ev, h); setTimeout(() => { sock.off(ev, h); r(null); }, ms);
-});
 
 // 인겸 = 기본 진행자 겸 플레이어
 const host = io(URL); await conn(host);
@@ -47,17 +42,6 @@ ok(!(await p2.emitWithAck('becomeHost', null)).ok, '비(非)인겸은 진행자 
 
 // 명단에 없는 이름 거부
 ok(!(await p2.emitWithAck('claim', { name: '없는사람', clientId: 'p2' })).ok, '명단에 없는 이름 거부');
-
-// 게임 시작 → 개인 미션 분배 (인겸 + 택윤 2명)
-const you1 = firstTruthy(host, 'you:update');
-const you2 = firstTruthy(p2, 'you:update');
-const reveal = firstTruthy(host, 'host:reveal');
-host.emit('host:startGame', { gameId: 'silent_scream' });
-const [m1, m2, rv] = await Promise.all([you1, you2, reveal]);
-ok(m1?.role && m2?.role, '두 폰 모두 개인 미션 수신');
-const secrets = [m1, m2].filter((m) => m.secret);
-ok(secrets.length === 1, `단어를 본 사람 정확히 1명(출제자): ${secrets.length}`);
-ok(rv?.answer === secrets[0]?.secret, `진행자만 정답 확인: ${rv?.answer}`);
 
 // 점수 실시간 반영
 const scored = new Promise((r) => p2.on('room:update', (s) => {

@@ -28,6 +28,7 @@
   function renderHostSQ(room) {
     const el = $('hSpeedQuiz'); if (!el) return;
     const s = room.speedquiz;
+    if (!s && window.App.anyGameActive(room)) { el.innerHTML = ''; return; }
     if (!s) {
       el.innerHTML = `<h2>🏃 스피드 퀴즈 (출제자형)</h2>
         ${room.tournament ? '' : '<p class="muted">팀전을 시작하면 팀별 출제자를 지정할 수 있어요.</p>'}

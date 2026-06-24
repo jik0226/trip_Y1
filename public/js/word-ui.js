@@ -24,6 +24,7 @@
   function renderHost(room) {
     const el = $('hWord'); if (!el) return;
     const s = room.word;
+    if (!s && window.App.anyGameActive(room)) { el.innerHTML = ''; return; }
     if (!s) {
       el.innerHTML = `<h2>🗣️ 이어말하기 / 외치기</h2>
         <p class="muted">랜덤 주제만 띄우고 승부는 대면 — 승팀만 누르면 승점 +1</p>

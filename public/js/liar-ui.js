@@ -60,6 +60,7 @@
   function renderHostLiar(room) {
     const el = $('hLiar'); if (!el) return;
     const s = room.liar;
+    if (!s && window.App.anyGameActive(room)) { el.innerHTML = ''; return; }
     if (!s) {
       el.innerHTML = `<h2>🤥 라이어게임</h2><p class="muted">한 명이 라이어! 설명 듣고 색출 (최소 3명)</p>
         <div class="pick-grid">
