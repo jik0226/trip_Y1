@@ -1,5 +1,7 @@
 // 출제자 스피드 퀴즈 변형 + 단어 풀.
 // 같은 엔진을 쓰고 keyword/conveyance(전달 방식)/words만 다름. 단어는 검토 후 자유롭게 수정.
+import { NAMES } from './players.js';
+
 export const SPEED_GAMES = {
   silent_scream: {
     id: 'silent_scream', name: '고요 속의 외침', emoji: '🗣️', keyword: '외침',
@@ -35,6 +37,25 @@ export const SPEED_GAMES = {
       '아인슈타인', '뉴턴', '에디슨', '마리 퀴리', '나폴레옹', '링컨', '간디',
       // 현대 인물·캐릭터
       '스티브 잡스', '일론 머스크', '펭수',
+    ],
+  },
+  classmates: {
+    id: 'classmates', name: '우리 반 인물', emoji: '🧑‍🤝‍🧑', keyword: '우리반',
+    conveyance: '우리 반 친구를 설명! 이름·별명·학번 금지 (특징·드립으로!)',
+    words: [...NAMES],
+  },
+  major_terms: {
+    id: 'major_terms', name: '전공 용어', emoji: '💻', keyword: '전공',
+    conveyance: '말로 설명! 영어 그대로·초성 금지 (수업 들은 거 기억나지?)',
+    words: [
+      // 파이썬
+      '변수', '함수', '리스트', '딕셔너리', '반복문', '조건문', '클래스', '객체', '예외처리', '모듈', '들여쓰기',
+      // 웹프로그래밍
+      'HTML', 'CSS', '자바스크립트', '태그', '선택자', '폼',
+      // 데이터베이스
+      '테이블', '기본키', '외래키', '쿼리', '정규화', '조인', '스키마',
+      // 컴공 기초
+      '알고리즘', '자료구조', '스택', '재귀함수', '이진탐색', '컴파일', '디버깅', '깃허브',
     ],
   },
 };
