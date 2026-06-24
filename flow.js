@@ -5,10 +5,14 @@ import { SPEED_GAMES } from './speedgames.js';
 import { SIMPLE_GAMES } from './simplegames.js';
 import { WORD_GAMES } from './wordgames.js';
 import { QUIZ_SETS } from './quizgames.js';
+import { AUDIO_MODES } from './songgames.js';
 
+// 게임 수보다 넉넉해야 함(부족하면 키워드 미배정 발생). 게임 늘면 여기도 늘리기.
 const ABSTRACT = [
   '번개', '심장', '미궁', '운명', '폭풍', '정글', '가면', '나침반', '모래시계', '불꽃',
   '소용돌이', '등대', '신기루', '화산', '빙하', '그림자', '천둥', '회오리', '별똥별', '오로라',
+  '미로', '파도', '사막', '깃털', '자석', '거울', '열쇠', '퍼즐', '발자국', '나비',
+  '용암', '심연', '폭죽', '수정', '나선', '메아리', '오아시스', '혜성',
 ];
 
 // 선택 가능한 게임 통합 레지스트리 (정체는 뽑기 전까지 숨김).
@@ -18,6 +22,7 @@ const REGISTRY = [
   ...SIMPLE_GAMES.map((g) => ({ id: 'simple:' + g.id, name: g.name, emoji: g.emoji, kind: 'simple' })),
   ...WORD_GAMES.map((g) => ({ id: 'word:' + g.id, name: g.name, emoji: g.emoji, kind: 'word' })),
   ...Object.keys(QUIZ_SETS).map((c) => ({ id: 'quiz:' + c, name: c + ' 퀴즈', emoji: '❓', kind: 'quiz' })),
+  ...Object.entries(AUDIO_MODES).map(([id, m]) => ({ id: 'audio:' + id, name: m.label, emoji: m.emoji, kind: 'audio' })),
 ];
 
 const shuffle = (arr) => {

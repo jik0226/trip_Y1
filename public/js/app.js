@@ -64,6 +64,7 @@ socket.on('room:update', (room) => {
   window.renderFlow?.(room);
   window.renderWord?.(room);
   window.renderQuiz?.(room);
+  window.renderAudio?.(room);
 });
 socket.on('you:update', renderYou);
 socket.on('host:reveal', renderReveal);

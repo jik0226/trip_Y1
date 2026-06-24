@@ -18,6 +18,7 @@ import { initCoin, registerCoin } from './coin.js';
 import { initFlow, flowPublic, registerFlow } from './flow.js';
 import { initWord, wordPublic, wordList, registerWord } from './word.js';
 import { initQuiz, quizPublic, quizCategories, registerQuiz } from './quiz.js';
+import { initAudio, audioPublic, audioModes, registerAudio } from './audio.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -37,6 +38,7 @@ const room = {
   flow: initFlow(),
   word: initWord(),
   quiz: initQuiz(),
+  audio: initAudio(),
   players: new Map(
     NAMES.map((name) => [name, { name, team: null, score: 0, connected: false, socketId: null, clientId: null }])
   ),
@@ -84,6 +86,8 @@ const publicState = () => ({
   wordGames: wordList(),
   quiz: quizPublic(room.quiz),
   quizCategories: quizCategories(),
+  audio: audioPublic(room.audio),
+  audioModes: audioModes(),
 });
 
 const broadcast = () => io.emit('room:update', publicState());
@@ -191,6 +195,7 @@ io.on('connection', (socket) => {
   registerFlow(socket, { room, broadcast, asHost });
   registerWord(socket, { room, broadcast, asHost });
   registerQuiz(socket, { io, room, broadcast, asHost });
+  registerAudio(socket, { io, room, broadcast, asHost });
 
   socket.on('disconnect', () => {
     if (room.hostId === socket.id) room.hostId = null;
