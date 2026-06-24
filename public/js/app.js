@@ -108,8 +108,31 @@ function playerRow(p) {
   </li>`;
 }
 
+// ---- 진행자: 통합 게임 선택 런처 ------------------------------------------
+function renderLauncher(room) {
+  const el = $('hLauncher'); if (!el) return;
+  if (window.App.anyGameActive(room)) { el.innerHTML = ''; return; } // 게임 진행 중엔 숨김
+  const btn = (emoji, label, ev, payload) =>
+    `<button class="game-btn launch-btn" data-ev="${ev}" data-p="${esc(JSON.stringify(payload))}">
+      <div class="emoji">${esc(emoji)}</div><div class="gname">${esc(label)}</div></button>`;
+  const sec = (title, items) => items.length
+    ? `<div class="launch-h">${title}</div><div class="game-grid">${items.join('')}</div>` : '';
+  el.innerHTML = `<h2>🎮 게임 선택</h2>
+    <p class="muted">바로 시작하거나, 위 🎲 뽑기로 키워드 선택!</p>
+    ${sec('🏃 스피드 퀴즈', (room.speedGames || []).map((g) => btn(g.emoji, g.name, 'host:sq:start', { variantId: g.id })))}
+    ${sec('🤔 추리·퀴즈', [btn('🤥', '라이어게임', 'host:liar:start', {})].concat(
+      (room.quizCategories || []).map((c) => btn('❓', c + ' 퀴즈', 'host:quiz:start', { category: c }))))}
+    ${sec('🗣️ 이어말하기·외치기', (room.wordGames || []).map((g) => btn(g.emoji, g.name, 'host:word:start', { id: g.id })))}
+    ${sec('🎵 오디오', (room.audioModes || []).map((m) => btn(m.emoji, m.label, 'host:audio:start', { modeKey: m.id })))}
+    ${sec('📋 룰 카드 (대면)', (room.simpleGames || []).map((g) => btn(g.emoji, g.name, 'host:simple:start', { id: g.id })))}`;
+  el.querySelectorAll('.launch-btn').forEach((b) => {
+    b.onclick = () => socket.emit(b.dataset.ev, JSON.parse(b.dataset.p));
+  });
+}
+
 // ---- 진행자 ---------------------------------------------------------------
 function renderHost(room) {
+  renderLauncher(room);
   $('hPlayers').innerHTML = room.players.map((p) => `
     <li data-id="${esc(p.name)}">
       <span class="dot ${p.connected ? '' : 'off'}"></span>

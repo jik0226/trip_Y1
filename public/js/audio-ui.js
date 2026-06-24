@@ -53,8 +53,8 @@
   function renderHost(room) {
     const el = $('hAudio'); if (!el) return;
     const s = room.audio;
-    if (!s && window.App.anyGameActive(room)) { el.innerHTML = ''; return; }
-    if (!s) {
+    if (!s) { el.innerHTML = ''; return; } // 시작은 통합 '게임 선택'에서
+    if (false) {
       el.innerHTML = `<h2>🎵 오디오 게임</h2><p class="muted">진행자 폰에서 유튜브로 재생. 곡 목록은 songgames.js에 미리 채워두세요.</p>
         <div class="coin-btns">${(room.audioModes || []).map((m) => `
           <button class="btn primary" data-act="astart" data-id="${m.id}">${esc(m.emoji)} ${esc(m.label)}</button>`).join('')}</div>`;

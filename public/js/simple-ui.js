@@ -30,8 +30,8 @@
   function renderHost(room) {
     const el = $('hSimple'); if (!el) return;
     const s = room.simple;
-    if (!s && window.App.anyGameActive(room)) { el.innerHTML = ''; return; }
-    if (!s) {
+    if (!s) { el.innerHTML = ''; return; } // 시작은 통합 '게임 선택'에서
+    if (false) {
       el.innerHTML = `<h2>📋 룰 카드 게임 (대면 진행)</h2>
         <p class="muted">규칙만 띄우고 승부는 직접 — 이긴 팀만 누르면 승점 +1</p>
         <div class="game-grid">${(room.simpleGames || []).map((g) => `
