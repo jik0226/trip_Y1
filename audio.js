@@ -23,7 +23,7 @@ export function audioPublic(s) {
   };
 }
 
-export function registerAudio(socket, { io, room, broadcast, asHost }) {
+export function registerAudio(socket, { io, room, broadcast, asHost, endOtherGames }) {
   const sendSong = () => { // 진행자에게만 현재 곡(videoId/start/sec) 전송
     const s = room.audio;
     if (!s.active || room.hostId == null) return;
@@ -35,6 +35,7 @@ export function registerAudio(socket, { io, room, broadcast, asHost }) {
   socket.on('host:audio:start', ({ modeKey }) => asHost(() => {
     const mode = AUDIO_MODES[modeKey];
     if (!mode) return io.to(socket.id).emit('host:error', '없는 모드예요.');
+    endOtherGames?.('audio');
     room.audio = { active: true, modeKey, mode, songs: shuffle(SONGS), idx: 0, score: { A: 0, B: 0 }, revealed: false, winner: null };
     broadcast(); sendSong();
   }));

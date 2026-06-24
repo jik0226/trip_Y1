@@ -133,17 +133,19 @@ function renderLauncher(room) {
 // ---- 진행자 ---------------------------------------------------------------
 function renderHost(room) {
   renderLauncher(room);
+  // #7 토너먼트 중에는 개인 ± 점수 숨김(팀 점수와 혼동 방지). 접속 현황만 표시.
+  const tour = room.tournament;
   $('hPlayers').innerHTML = room.players.map((p) => `
     <li data-id="${esc(p.name)}">
       <span class="dot ${p.connected ? '' : 'off'}"></span>
       <span class="pname">${esc(p.name)}</span>
-      <span class="score-ctrl">
+      ${tour ? '' : `<span class="score-ctrl">
         <button data-act="minus">−</button>
         <span class="pscore">${p.score}</span>
         <button data-act="plus">＋</button>
-      </span>
+      </span>`}
     </li>`).join('');
-  $('hPlayers').querySelectorAll('li').forEach((li) => {
+  if (!tour) $('hPlayers').querySelectorAll('li').forEach((li) => {
     const id = li.dataset.id;
     li.querySelector('[data-act="plus"]').onclick = () => socket.emit('host:addScore', { playerId: id, delta: 1 });
     li.querySelector('[data-act="minus"]').onclick = () => socket.emit('host:addScore', { playerId: id, delta: -1 });

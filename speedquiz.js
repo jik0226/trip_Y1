@@ -120,9 +120,12 @@ export function setupSpeedQuiz({ io, room, broadcast }) {
     if (s.active && s.phase === 'playing' && s.roundEndsAt) sqTimer = setTimeout(finishRound, Math.max(0, s.roundEndsAt - Date.now()));
   };
 
-  return function registerSpeedQuiz(socket, { asHost, relay }) {
+  const endSelf = () => { stopSqTimer(); room.speedquiz = initSpeedQuiz(); };
+
+  return { end: endSelf, register: function registerSpeedQuiz(socket, { asHost, relay, endOtherGames }) {
     socket.on('host:sq:start', ({ variantId, duration }) => asHost(() => {
       stopSqTimer();
+      endOtherGames?.('speedquiz');
       room.speedquiz = startSpeedQuiz(variantId, { duration }) || initSpeedQuiz();
       if (!room.speedquiz.active) io.to(socket.id).emit('host:error', '게임을 찾을 수 없어요.');
       broadcast();
@@ -141,7 +144,7 @@ export function setupSpeedQuiz({ io, room, broadcast }) {
     socket.on('host:sq:end', () => asHost(() => { stopSqTimer(); room.speedquiz = initSpeedQuiz(); broadcast(); }));
     socket.on('sq:correct', () => { if (!sqCorrect(room.speedquiz, socket.data.name).error) { broadcast(); sendSqWord(); } });
     socket.on('sq:pass', () => { if (!sqPass(room.speedquiz, socket.data.name).error) { broadcast(); sendSqWord(); } });
-  };
+  } };
 }
 
 // 클라이언트 공개 상태 — 현재 단어는 절대 포함하지 않음(출제자에게만 따로 전송).

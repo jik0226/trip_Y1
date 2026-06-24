@@ -17,10 +17,11 @@ export function wordPublic(s) {
   return { id: s.id, name: s.name, emoji: s.emoji, rule: s.rule, prompt: s.prompt, lastWin: s.lastWin || null };
 }
 
-export function registerWord(socket, { room, broadcast, asHost }) {
+export function registerWord(socket, { room, broadcast, asHost, endOtherGames }) {
   socket.on('host:word:start', ({ id }) => asHost(() => {
     const g = WORD_GAMES.find((x) => x.id === id);
     if (!g) return;
+    endOtherGames?.('word');
     room.word = { active: true, id: g.id, name: g.name, emoji: g.emoji, rule: g.rule, prompt: genPrompt(g), lastWin: null };
     broadcast();
   }));
@@ -28,9 +29,14 @@ export function registerWord(socket, { room, broadcast, asHost }) {
     const g = room.word.active && WORD_GAMES.find((x) => x.id === room.word.id);
     if (g) { room.word.prompt = genPrompt(g); room.word.lastWin = null; broadcast(); }
   }));
+  // #2 멱등: 이전 승팀 자동 정정.
   socket.on('host:word:win', ({ team }) => asHost(() => {
     if (!room.word.active) return;
-    if ((team === 'A' || team === 'B') && room.tournament.active) addTeamScore(room.tournament, team, 1);
+    const prev = room.word.lastWin;
+    if (room.tournament.active) {
+      if (prev === 'A' || prev === 'B') addTeamScore(room.tournament, prev, -1);
+      if (team === 'A' || team === 'B') addTeamScore(room.tournament, team, 1);
+    }
     room.word.lastWin = team;
     broadcast();
   }));

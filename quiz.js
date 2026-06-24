@@ -23,7 +23,7 @@ export function quizPublic(s) {
   };
 }
 
-export function registerQuiz(socket, { io, room, broadcast, asHost }) {
+export function registerQuiz(socket, { io, room, broadcast, asHost, endOtherGames }) {
   const sendAnswer = () => { // 현재 정답을 진행자에게만 비공개 전송
     const s = room.quiz;
     if (!s.active || room.hostId == null) return;
@@ -34,6 +34,7 @@ export function registerQuiz(socket, { io, room, broadcast, asHost }) {
   socket.on('host:quiz:start', ({ category }) => asHost(() => {
     const set = QUIZ_SETS[category];
     if (!set) return io.to(socket.id).emit('host:error', '없는 카테고리예요.');
+    endOtherGames?.('quiz');
     room.quiz = { active: true, category, questions: shuffle(set), idx: 0, score: { A: 0, B: 0 }, revealed: false, winner: null };
     broadcast(); sendAnswer();
   }));

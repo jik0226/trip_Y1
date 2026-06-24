@@ -76,9 +76,11 @@
         <button class="btn primary" data-act="ltovote">투표 시작 →</button>
         <button class="btn small ghost" data-act="lend">게임 종료</button>`;
     } else if (s.phase === 'vote') {
+      const done = s.voteCount >= s.participants.length;
       el.innerHTML = `<h2>🗳️ 라이어 투표 중</h2>
-        <div class="sq-live">투표 ${s.voteCount} / ${s.participants.length}</div>
-        <button class="btn primary" data-act="lreveal">결과 공개 🎭</button>
+        <div class="sq-live">투표 ${s.voteCount} / ${s.participants.length}${done ? ' ✓' : ''}</div>
+        <button class="btn primary" data-act="lreveal" ${done ? '' : 'disabled'}>결과 공개 🎭</button>
+        ${done ? '' : '<button class="btn small ghost" data-act="lrevealForce">강제 공개 (미투표자 패스)</button>'}
         <button class="btn small ghost" data-act="lend">게임 종료</button>`;
     } else {
       const r = s.result;
@@ -101,7 +103,8 @@
         const a = b.dataset.act;
         if (a === 'lstart') socket.emit('host:liar:start', b.dataset.cat ? { category: b.dataset.cat } : {});
         else if (a === 'ltovote') socket.emit('host:liar:toVote');
-        else if (a === 'lreveal') socket.emit('host:liar:reveal');
+        else if (a === 'lreveal') socket.emit('host:liar:reveal', {});
+        else if (a === 'lrevealForce') socket.emit('host:liar:reveal', { force: true });
         else if (a === 'lvote') socket.emit('liar:vote', { target: b.dataset.name });
         else if (a === 'lguess') socket.emit('host:liar:guess', { success: b.dataset.ok === '1' });
         else if (a === 'lend') socket.emit('host:liar:end');

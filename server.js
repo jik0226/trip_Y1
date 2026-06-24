@@ -85,7 +85,18 @@ const publicState = () => ({
 const broadcast = () => io.emit('room:update', publicState());
 
 // 스피드 퀴즈 런타임(타이머 등)은 한 번만 생성 — connection마다 register만 호출.
-const registerSpeedQuiz = setupSpeedQuiz({ io, room, broadcast });
+const sqRuntime = setupSpeedQuiz({ io, room, broadcast });
+const registerSpeedQuiz = sqRuntime.register;
+
+// 새 게임 시작 시 다른 게임을 자동으로 종료(중첩 노출 방지). 메타(coin/flow/tournament)는 유지.
+const endOtherGames = (keep) => {
+  if (keep !== 'speedquiz') sqRuntime.end();
+  if (keep !== 'liar') room.liar = initLiar();
+  if (keep !== 'simple') room.simple = initSimple();
+  if (keep !== 'word') room.word = initWord();
+  if (keep !== 'quiz') room.quiz = initQuiz();
+  if (keep !== 'audio') room.audio = initAudio();
+};
 
 io.on('connection', (socket) => {
   socket.emit('room:update', publicState()); // 홈 화면이 이름 카드/접속현황을 바로 그릴 수 있게
@@ -105,8 +116,11 @@ io.on('connection', (socket) => {
     p.socketId = socket.id;
     p.clientId = clientId || p.clientId;
     socket.data.name = name;
-    // 기본 진행자(인겸)가 들어오고 현재 진행자가 없으면 자동으로 진행자 지정.
-    if (name === DEFAULT_HOST && !room.hostId) room.hostId = socket.id;
+    // 기본 진행자(인겸)가 들어오면 자동 진행자 지정. 끊긴 좀비 호스트 소켓도 감지해 재바인딩(#5).
+    if (name === DEFAULT_HOST) {
+      const hostAlive = room.hostId && io.sockets.sockets.get(room.hostId);
+      if (!hostAlive) room.hostId = socket.id;
+    }
     cb?.({ ok: true, name });
     broadcast();
     // 스피드 퀴즈 진행 중 출제자가 재접속하면 단어 다시 전송.
@@ -140,15 +154,16 @@ io.on('connection', (socket) => {
 
   // --- 모듈별 이벤트 핸들러 등록 ---
   const relay = (res) => { if (res?.error) io.to(socket.id).emit('host:error', res.error); broadcast(); };
-  registerTournament(socket, { room, broadcast, asHost, relay });
-  registerSpeedQuiz(socket, { asHost, relay });
-  registerLiar(socket, { io, room, broadcast, asHost, relay });
-  registerSimple(socket, { room, broadcast, asHost });
-  registerCoin(socket, { room, broadcast, asHost });
-  registerFlow(socket, { room, broadcast, asHost });
-  registerWord(socket, { room, broadcast, asHost });
-  registerQuiz(socket, { io, room, broadcast, asHost });
-  registerAudio(socket, { io, room, broadcast, asHost });
+  const ctx = { io, room, broadcast, asHost, relay, endOtherGames };
+  registerTournament(socket, ctx);
+  registerSpeedQuiz(socket, ctx);
+  registerLiar(socket, ctx);
+  registerSimple(socket, ctx);
+  registerCoin(socket, ctx);
+  registerFlow(socket, ctx);
+  registerWord(socket, ctx);
+  registerQuiz(socket, ctx);
+  registerAudio(socket, ctx);
 
   socket.on('disconnect', () => {
     if (room.hostId === socket.id) room.hostId = null;

@@ -92,9 +92,13 @@ export function castVote(t, voterName, targetName) {
   return { ok: true };
 }
 
-// 집계가 안 끝나도 진행자가 강제 마감.
+// 집계가 안 끝나도 진행자가 강제 마감 — 누락된 픽은 랜덤으로 채워 4:4 깨짐 방지.
 export function forceResolve(t) {
   if (t.phase !== 'swap') return { error: '교환 단계가 아니에요.' };
+  if (t.swap.method === 'leader') {
+    if (!t.swap.picks.A) t.swap.picks.A = pick(t.teams.B.members); // A가 데려올 사람(B 소속)
+    if (!t.swap.picks.B) t.swap.picks.B = pick(t.teams.A.members);
+  }
   return resolveSwap(t);
 }
 

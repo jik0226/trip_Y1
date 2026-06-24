@@ -82,7 +82,7 @@ export function liarPublic(s) {
 }
 
 // 소켓 핸들러 등록 (server.js의 connection 안에서 호출).
-export function registerLiar(socket, { io, room, broadcast, asHost, relay }) {
+export function registerLiar(socket, { io, room, broadcast, asHost, relay, endOtherGames }) {
   const socketOf = (name) => { const p = name && room.players.get(name); return p?.socketId || null; };
   const sendSecrets = () => {
     const s = room.liar;
@@ -94,11 +94,22 @@ export function registerLiar(socket, { io, room, broadcast, asHost, relay }) {
     const parts = [...room.players.values()].filter((p) => p.connected).map((p) => p.name);
     const st = startLiar(parts, { category });
     if (!st) return io.to(socket.id).emit('host:error', '라이어게임은 최소 3명 접속이 필요해요.');
+    endOtherGames?.('liar');
     room.liar = st; broadcast(); sendSecrets();
   }));
   socket.on('host:liar:toVote', () => asHost(() => relay(liarToVote(room.liar))));
   socket.on('liar:vote', ({ target }) => { if (socket.data.name) relay(liarVote(room.liar, socket.data.name, target)); });
-  socket.on('host:liar:reveal', () => asHost(() => relay(liarReveal(room.liar))));
+  // #4: 투표 미완료면 막음. force=true로 진행자가 강제 가능.
+  socket.on('host:liar:reveal', ({ force } = {}) => asHost(() => {
+    const s = room.liar;
+    if (s?.active && s.phase === 'vote' && !force) {
+      const voted = Object.keys(s.votes).length;
+      if (voted < s.participants.length) {
+        return io.to(socket.id).emit('host:error', `아직 ${voted}/${s.participants.length}만 투표했어요. 더 기다리거나 '강제 공개'를 사용하세요.`);
+      }
+    }
+    relay(liarReveal(room.liar));
+  }));
   socket.on('host:liar:guess', ({ success }) => asHost(() => relay(liarGuessResult(room.liar, success))));
   socket.on('host:liar:end', () => asHost(() => { room.liar = initLiar(); broadcast(); }));
   socket.on('liar:whoami', () => {
