@@ -1,0 +1,30 @@
+import { io } from 'socket.io-client';
+const URL='http://localhost:3000'; const wait=(ms)=>new Promise(r=>setTimeout(r,ms));
+let pass=0,fail=0; const ok=(c,m)=>(c?(pass++,console.log('  ✅',m)):(fail++,console.log('  ❌',m)));
+const host=io(URL); await new Promise(r=>host.on('connect',r));
+await host.emitWithAck('claim',{name:'인겸',clientId:'c-인겸'});
+const p=io(URL); await new Promise(r=>p.on('connect',r)); await p.emitWithAck('claim',{name:'택윤',clientId:'c-택윤'});
+let R=null; p.on('room:update',s=>R=s); // 참가자 시점 공개 상태
+let hostAns=null; host.on('quiz:answer',a=>hostAns=a?.answer||null);
+const Q=()=>R?.quiz;
+host.emit('host:endTournament'); await wait(120); host.emit('host:startTournament'); await wait(200);
+host.emit('host:quiz:start',{category:'상식'}); await wait(250);
+ok(Q()&&typeof Q().question==='string'&&Q().answer===null,`퀴즈 시작 + 문제 공개(정답 숨김): ${Q()?.question}`);
+ok(typeof hostAns==='string','진행자만 정답 수신(quiz:answer)');
+ok(!JSON.stringify(Q()).includes(hostAns),'공개 상태엔 정답 미포함(참가자엔 비밀)');
+host.emit('host:quiz:reveal'); await wait(200);
+ok(Q().revealed && Q().answer===hostAns,'정답 공개 → 전원에 정답 노출');
+host.emit('host:quiz:award',{team:'A'}); await wait(150);
+ok(Q().score.A===1 && Q().idx===1 && !Q().revealed,'A 정답 +1, 다음 문제');
+host.emit('host:quiz:award',{team:'A'}); await wait(120);
+host.emit('host:quiz:award',{team:'B'}); await wait(120);
+ok(Q().score.A===2 && Q().score.B===1,`점수 누적 A2:B1`);
+host.emit('host:quiz:finish'); await wait(200);
+ok(Q().winner==='A' && R.tournament.teamScore.A===1,`결과 A승 + 승점 +1`);
+// flow 레지스트리에 퀴즈 포함
+host.emit('host:flow:start'); host.emit('host:flow:selector',{team:'A'}); await wait(250);
+ok(R.flow.total>=19,`뽑기 레지스트리에 퀴즈 포함(총 ${R.flow.total}개)`);
+host.emit('host:flow:end'); host.emit('host:quiz:end'); await wait(150);
+ok(!Q(),'퀴즈 종료 정리');
+console.log(`\n결과: ${pass} 통과 / ${fail} 실패`);
+host.close(); p.close(); process.exit(fail?1:0);

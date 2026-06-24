@@ -4,6 +4,7 @@
 import { SPEED_GAMES } from './speedgames.js';
 import { SIMPLE_GAMES } from './simplegames.js';
 import { WORD_GAMES } from './wordgames.js';
+import { QUIZ_SETS } from './quizgames.js';
 
 const ABSTRACT = [
   '번개', '심장', '미궁', '운명', '폭풍', '정글', '가면', '나침반', '모래시계', '불꽃',
@@ -16,6 +17,7 @@ const REGISTRY = [
   { id: 'liar', name: '라이어게임', emoji: '🤥', kind: 'liar' },
   ...SIMPLE_GAMES.map((g) => ({ id: 'simple:' + g.id, name: g.name, emoji: g.emoji, kind: 'simple' })),
   ...WORD_GAMES.map((g) => ({ id: 'word:' + g.id, name: g.name, emoji: g.emoji, kind: 'word' })),
+  ...Object.keys(QUIZ_SETS).map((c) => ({ id: 'quiz:' + c, name: c + ' 퀴즈', emoji: '❓', kind: 'quiz' })),
 ];
 
 const shuffle = (arr) => {

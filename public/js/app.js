@@ -63,6 +63,7 @@ socket.on('room:update', (room) => {
   window.renderCoin?.(room);
   window.renderFlow?.(room);
   window.renderWord?.(room);
+  window.renderQuiz?.(room);
 });
 socket.on('you:update', renderYou);
 socket.on('host:reveal', renderReveal);

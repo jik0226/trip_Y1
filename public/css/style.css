@@ -277,3 +277,8 @@ input:focus { border-color: var(--accent2); }
 
 /* ---- 이어말하기 주제 ---- */
 .word-prompt { font-size: 26px; font-weight: 900; text-align: center; color: var(--accent2); margin: 12px 0; word-break: keep-all; }
+
+/* ---- 퀴즈 ---- */
+.quiz-q { font-size: 22px; font-weight: 800; text-align: center; margin: 14px 0; line-height: 1.4; word-break: keep-all; }
+.quiz-a { text-align: center; font-size: 15px; color: var(--muted); margin: 6px 0; }
+.quiz-a b { color: var(--good); }
