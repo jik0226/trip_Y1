@@ -50,6 +50,7 @@
       <button id="backToPlayerBtn" class="btn small ghost hidden">← 내 화면</button>
     </header>
     <div id="hReveal" class="reveal hidden"></div>
+    <div id="hCoin" class="card"></div>
     <div id="hTournament" class="card"></div>
     <div id="hSpeedQuiz" class="card"></div>
     <div id="hLiar" class="card"></div>
@@ -67,11 +68,14 @@
     <p id="hError" class="error"></p>
   </section>
 
+  <div id="coinOverlay" class="coin-overlay hidden"></div>
+
   <script src="/socket.io/socket.io.js"></script>
   <script src="/js/app.js"></script>
   <script src="/js/tournament-ui.js"></script>
   <script src="/js/speedquiz-ui.js"></script>
   <script src="/js/liar-ui.js"></script>
   <script src="/js/simple-ui.js"></script>
+  <script src="/js/coin-ui.js"></script>
 </body>
 </html>
