@@ -93,6 +93,11 @@ function renderPlayer(room) {
     $('pName').textContent = me.name;
     $('pTeam').textContent = me.team || '미정';
     $('pScore').textContent = me.score;
+    // 토너먼트 results 중 내가 진 팀에 있었던 항목만 = 내가 걸린 벌칙
+    const myChores = (room.tournament?.results || []).filter((r) => r.loserMembers?.includes(myName));
+    $('pChores').innerHTML = myChores.length
+      ? myChores.map((r) => `<span class="chore-chip">${esc(r.chore)}</span>`).join('')
+      : '<span class="muted">없음</span>';
     // 진행자 컨트롤 버튼은 기본 진행자(인겸)에게만 노출.
     $('toHostBtn').classList.toggle('hidden', myName !== room.defaultHost);
   }

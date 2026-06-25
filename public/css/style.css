@@ -296,6 +296,11 @@ input:focus { border-color: var(--accent2); }
 .qz-input { display: flex; gap: 8px; margin: 12px 0; }
 .qz-input input { flex: 1; padding: 12px; font-size: 16px; border-radius: 10px; border: 1px solid var(--accent2); background: var(--card2); color: var(--text); }
 .qz-input .btn { margin: 0; padding: 12px 16px; }
+
+/* ---- 내가 걸린 벌칙 ---- */
+.stat-chores { align-items: flex-start; }
+.chore-list { display: flex; flex-wrap: wrap; gap: 4px; justify-content: flex-end; max-width: 65%; }
+.chore-chip { background: var(--accent); color: #fff; border-radius: 8px; padding: 3px 8px; font-size: 12px; font-weight: 700; }
 a.btn { display: inline-block; text-align: center; text-decoration: none; }
 
 /* ---- 양세찬 게임 ---- */
