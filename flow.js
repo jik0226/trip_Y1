@@ -18,6 +18,7 @@ const ABSTRACT = [
 const REGISTRY = [
   ...Object.values(SPEED_GAMES).map((g) => ({ id: 'sq:' + g.id, name: g.name, emoji: g.emoji, kind: 'speed' })),
   { id: 'liar', name: '라이어게임', emoji: '🤥', kind: 'liar' },
+  { id: 'headband', name: '양세찬 게임', emoji: '🎤', kind: 'headband' },
   ...SIMPLE_GAMES.map((g) => ({ id: 'simple:' + g.id, name: g.name, emoji: g.emoji, kind: 'simple' })),
   ...WORD_GAMES.map((g) => ({ id: 'word:' + g.id, name: g.name, emoji: g.emoji, kind: 'word' })),
   ...Object.keys(QUIZ_SETS).map((c) => ({ id: 'quiz:' + c, name: c + ' 퀴즈', emoji: '❓', kind: 'quiz' })),

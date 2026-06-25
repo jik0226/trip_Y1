@@ -19,7 +19,7 @@ const show = (name) => { for (const k in screens) screens[k].classList.toggle('a
 // 게임 모듈들과 공유할 참조. anyGameActive: 어떤 게임이라도 진행 중인지(진행자 화면 정리용).
 window.App = {
   socket, $, esc, getMyName: () => myName,
-  anyGameActive: (room) => !!(room.speedquiz || room.liar || room.simple || room.word || room.quiz),
+  anyGameActive: (room) => !!(room.speedquiz || room.liar || room.simple || room.word || room.quiz || room.headband),
 };
 
 // ---- 입장 동작 -----------------------------------------------------------
@@ -66,6 +66,7 @@ socket.on('room:update', (room) => {
   window.renderFlow?.(room);
   window.renderWord?.(room);
   window.renderQuiz?.(room);
+  window.renderHeadband?.(room);
 });
 socket.on('host:error', (m) => { $('hError').textContent = m; setTimeout(() => ($('hError').textContent = ''), 4000); });
 socket.on('bumped', () => { alert('다른 기기에서 같은 이름으로 접속했어요.'); sessionStorage.removeItem('myName'); location.reload(); });

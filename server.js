@@ -17,6 +17,7 @@ import { initCoin, registerCoin } from './coin.js';
 import { initFlow, flowPublic, registerFlow } from './flow.js';
 import { initWord, wordPublic, wordList, registerWord } from './word.js';
 import { initQuiz, quizPublic, quizCategories, registerQuiz } from './quiz.js';
+import { initHeadband, headbandPublic, headbandSources, headbandYou, registerHeadband } from './headband.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -35,6 +36,7 @@ const room = {
   flow: initFlow(),
   word: initWord(),
   quiz: initQuiz(),
+  headband: initHeadband(),
   players: new Map(
     NAMES.map((name) => [name, { name, team: null, score: 0, connected: false, socketId: null, clientId: null }])
   ),
@@ -76,6 +78,8 @@ const publicState = () => ({
   wordGames: wordList(),
   quiz: quizPublic(room.quiz),
   quizCategories: quizCategories(),
+  headband: headbandPublic(room.headband),
+  headbandSources: headbandSources(),
 });
 
 const broadcast = () => io.emit('room:update', publicState());
@@ -91,6 +95,7 @@ const endOtherGames = (keep) => {
   if (keep !== 'simple') room.simple = initSimple();
   if (keep !== 'word') room.word = initWord();
   if (keep !== 'quiz') room.quiz = initQuiz();
+  if (keep !== 'headband') room.headband = initHeadband();
 };
 
 io.on('connection', (socket) => {
@@ -122,6 +127,10 @@ io.on('connection', (socket) => {
     const sq = room.speedquiz;
     if (sq.active && sq.phase === 'playing' && sq.presenter[sq.currentTeam] === name) {
       io.to(socket.id).emit('sq:word', { word: sqWord(sq) });
+    }
+    // 양세찬게임 진행 중이면 비밀 다시 전송(재접속 대응).
+    if (room.headband.active) {
+      io.to(socket.id).emit('headband:you', headbandYou(room.headband, name));
     }
   });
 
@@ -158,6 +167,7 @@ io.on('connection', (socket) => {
   registerFlow(socket, ctx);
   registerWord(socket, ctx);
   registerQuiz(socket, ctx);
+  registerHeadband(socket, ctx);
 
   socket.on('disconnect', () => {
     if (room.hostId === socket.id) room.hostId = null;

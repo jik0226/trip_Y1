@@ -37,11 +37,6 @@ export const SIMPLE_GAMES = [
     scoring: '규칙 안 깨고 끝까지 버틴 팀 승',
   },
   {
-    id: 'yangsechan', name: '양세찬 게임', emoji: '🎤', keyword: '한박자',
-    rule: "시끄러운 노래를 틀어놓고 질문에 답하는데, 지금 질문이 아니라 '바로 전 질문'에 답해야 해요! 한 박자 늦게. 헷갈려서 현재 질문에 답하면 탈락.",
-    scoring: '끝까지 안 헷갈린 팀 승',
-  },
-  {
     id: 'song1s', name: '1초 듣고 노래 맞히기', emoji: '🎧', keyword: '한음',
     rule: '🎮 스타크래프트 켜고 유즈맵(1초 노래 맞히기)으로 진행! 앱은 승팀 기록만 담당.',
     scoring: '더 많이 맞힌 팀 승',

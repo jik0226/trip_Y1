@@ -284,3 +284,16 @@ input:focus { border-color: var(--accent2); }
 .quiz-a { text-align: center; font-size: 15px; color: var(--muted); margin: 6px 0; }
 .quiz-a b { color: var(--good); }
 a.btn { display: inline-block; text-align: center; text-decoration: none; }
+
+/* ---- 양세찬 게임 ---- */
+.hb-section { font-size: 13px; color: var(--muted); font-weight: 700; margin: 12px 0 6px; }
+.hb-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+.btn.chip-pick { margin: 0; padding: 8px 12px; font-size: 13px; min-width: auto; width: auto; }
+.hb-list { background: var(--card2); border-radius: 12px; padding: 8px 12px; }
+.hb-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.hb-row:last-child { border-bottom: none; }
+.hb-row b { font-weight: 700; }
+.hb-row span { color: var(--accent2); font-weight: 700; }
+.hb-row.hb-self span { color: var(--muted); }
+.hb-mine { text-align: center; padding: 16px; background: var(--card2); border-radius: 12px; border: 1px solid var(--accent); margin: 10px 0; }
+.hb-mine-q { font-size: 40px; font-weight: 900; color: var(--accent); margin-top: 6px; }
