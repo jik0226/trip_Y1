@@ -9,7 +9,7 @@ import { NAMES, DEFAULT_HOST } from './players.js';
 import { TEAM_CONFIG } from './teams.js';
 import { initTournament, teamOf, tournamentPublic, registerTournament } from './tournament.js';
 import { SPEED_GAMES } from './speedgames.js';
-import { initSpeedQuiz, sqWord, speedQuizPublic, setupSpeedQuiz } from './speedquiz.js';
+import { initSpeedQuiz, sqWord, sqCurrentPresenter, speedQuizPublic, setupSpeedQuiz } from './speedquiz.js';
 import { LIAR_TOPICS } from './liargames.js';
 import { initLiar, liarPublic, registerLiar } from './liar.js';
 import { initSimple, simplePublic, simpleList, registerSimple } from './simple.js';
@@ -123,10 +123,13 @@ io.on('connection', (socket) => {
     }
     cb?.({ ok: true, name });
     broadcast();
-    // 스피드 퀴즈 진행 중 출제자가 재접속하면 단어 다시 전송.
+    // 스피드 퀴즈 진행 중 출제자(현재 차례)가 재접속하면 단어 다시 전송.
     const sq = room.speedquiz;
-    if (sq.active && sq.phase === 'playing' && sq.presenter[sq.currentTeam] === name) {
-      io.to(socket.id).emit('sq:word', { word: sqWord(sq) });
+    if (sq.active && sq.phase === 'playing') {
+      const arr = sq.presenter[sq.currentTeam] || [];
+      if (arr.includes(name)) {
+        io.to(socket.id).emit('sq:word', sqCurrentPresenter(sq) === name ? { word: sqWord(sq) } : null);
+      }
     }
     // 양세찬게임 진행 중이면 비밀 다시 전송(재접속 대응).
     if (room.headband.active) {
