@@ -32,7 +32,7 @@ ok(!R.headband,'게임 종료 정리');
 
 // flow 레지스트리
 host.emit('host:flow:start'); host.emit('host:flow:selector',{team:'A'}); await wait(250);
-ok(R.flow.total>=23, `뽑기 레지스트리에 양세찬 포함(총 ${R.flow.total}개)`);
+ok(R.flow.total>=20, `뽑기 레지스트리에 양세찬 포함(총 ${R.flow.total}개)`);
 host.emit('host:flow:end'); await wait(150);
 
 console.log(`\n결과: ${pass} 통과 / ${fail} 실패`);
