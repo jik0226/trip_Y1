@@ -19,7 +19,7 @@ const show = (name) => { for (const k in screens) screens[k].classList.toggle('a
 // 게임 모듈들과 공유할 참조. anyGameActive: 어떤 게임이라도 진행 중인지(진행자 화면 정리용).
 window.App = {
   socket, $, esc, getMyName: () => myName,
-  anyGameActive: (room) => !!(room.speedquiz || room.liar || room.simple || room.word || room.quiz || room.audio),
+  anyGameActive: (room) => !!(room.speedquiz || room.liar || room.simple || room.word || room.quiz),
 };
 
 // ---- 입장 동작 -----------------------------------------------------------
@@ -66,7 +66,6 @@ socket.on('room:update', (room) => {
   window.renderFlow?.(room);
   window.renderWord?.(room);
   window.renderQuiz?.(room);
-  window.renderAudio?.(room);
 });
 socket.on('host:error', (m) => { $('hError').textContent = m; setTimeout(() => ($('hError').textContent = ''), 4000); });
 socket.on('bumped', () => { alert('다른 기기에서 같은 이름으로 접속했어요.'); sessionStorage.removeItem('myName'); location.reload(); });
@@ -123,7 +122,6 @@ function renderLauncher(room) {
     ${sec('🤔 추리·퀴즈', [btn('🤥', '라이어게임', 'host:liar:start', {})].concat(
       (room.quizCategories || []).map((c) => btn('❓', c + ' 퀴즈', 'host:quiz:start', { category: c }))))}
     ${sec('🗣️ 이어말하기·외치기', (room.wordGames || []).map((g) => btn(g.emoji, g.name, 'host:word:start', { id: g.id })))}
-    ${sec('🎵 오디오', (room.audioModes || []).map((m) => btn(m.emoji, m.label, 'host:audio:start', { modeKey: m.id })))}
     ${sec('📋 룰 카드 (대면)', (room.simpleGames || []).map((g) => btn(g.emoji, g.name, 'host:simple:start', { id: g.id })))}`;
   el.querySelectorAll('.launch-btn').forEach((b) => {
     b.onclick = () => socket.emit(b.dataset.ev, JSON.parse(b.dataset.p));

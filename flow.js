@@ -5,7 +5,6 @@ import { SPEED_GAMES } from './speedgames.js';
 import { SIMPLE_GAMES } from './simplegames.js';
 import { WORD_GAMES } from './wordgames.js';
 import { QUIZ_SETS } from './quizgames.js';
-import { AUDIO_MODES } from './songgames.js';
 
 // 게임 수보다 넉넉해야 함(부족하면 키워드 미배정 발생). 게임 늘면 여기도 늘리기.
 const ABSTRACT = [
@@ -22,7 +21,6 @@ const REGISTRY = [
   ...SIMPLE_GAMES.map((g) => ({ id: 'simple:' + g.id, name: g.name, emoji: g.emoji, kind: 'simple' })),
   ...WORD_GAMES.map((g) => ({ id: 'word:' + g.id, name: g.name, emoji: g.emoji, kind: 'word' })),
   ...Object.keys(QUIZ_SETS).map((c) => ({ id: 'quiz:' + c, name: c + ' 퀴즈', emoji: '❓', kind: 'quiz' })),
-  ...Object.entries(AUDIO_MODES).map(([id, m]) => ({ id: 'audio:' + id, name: m.label, emoji: m.emoji, kind: 'audio' })),
 ];
 
 const shuffle = (arr) => {
